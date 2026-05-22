@@ -10,14 +10,13 @@ abstract class Failure extends Equatable {
 }
 
 class ServerFailure extends Failure {
-  const ServerFailure([String message = 'Server error']) : super(message);
+  const ServerFailure([super.message = 'Server error']);
 }
 
 class UnauthorizedFailure extends Failure {
-  const UnauthorizedFailure([String message = 'Unauthorized']) : super(message);
+  const UnauthorizedFailure([super.message = 'Unauthorized']);
 }
 
 class EmailNotVerifiedFailure extends Failure {
-  const EmailNotVerifiedFailure([String message = 'Email not verified'])
-      : super(message);
+  const EmailNotVerifiedFailure([super.message = 'Email not verified']);
 }

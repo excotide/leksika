@@ -28,7 +28,7 @@ class OnboardingScreen extends StatelessWidget {
                   child: Icon(
                     Icons.book_rounded,
                     size: 90,
-                    color: darkGreenButton.withOpacity(0.6),
+                    color: darkGreenButton.withValues(alpha: 0.6),
                   ),
                 ),
               ),

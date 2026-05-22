@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 // Routes Public (Tanpa Login)
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/auth/google', [AuthController::class, 'loginWithGoogle']);
 
 // Routes OTP (Butuh Login, Belum Perlu Verified)
 Route::middleware('auth:sanctum')->group(function () {

@@ -59,3 +59,8 @@ class FetchUserRequested extends AuthEvent {
 class LogoutRequested extends AuthEvent {
   const LogoutRequested();
 }
+
+class GoogleLoginRequested extends AuthEvent {
+  final String idToken;
+  const GoogleLoginRequested(this.idToken);
+}

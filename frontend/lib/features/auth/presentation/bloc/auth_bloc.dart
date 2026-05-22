@@ -8,6 +8,7 @@ import 'package:leksika/features/auth/domain/usecases/verify_otp_usecase.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_event.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_state.dart';
 import 'package:leksika/features/auth/domain/usecases/logout_usecase.dart';
+import 'package:leksika/features/auth/domain/usecases/google_login_usecase.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc({
@@ -17,6 +18,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.resendOtpUsecase,
     required this.getUserUsecase,
     required this.logoutUsecase,
+    required this.googleLoginUsecase
   }) : super(const AuthInitial()) {
     on<LoginRequested>(_onLoginRequested);
     on<RegisterRequested>(_onRegisterRequested);
@@ -24,6 +26,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<ResendOtpRequested>(_onResendOtpRequested);
     on<FetchUserRequested>(_onFetchUser);
     on<LogoutRequested>(_onLogoutRequested);
+    on<GoogleLoginRequested>(_onGoogleLoginRequested);
   }
 
   final LoginUsecase loginUsecase;
@@ -32,6 +35,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final ResendOtpUsecase resendOtpUsecase;
   final GetUserUsecase getUserUsecase;
   final LogoutUsecase logoutUsecase;
+  final GoogleLoginUsecase googleLoginUsecase;
 
   Future<void> _onLoginRequested(
     LoginRequested event,
@@ -51,8 +55,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     RegisterRequested event,
     Emitter<AuthState> emit,
   ) async {
-    print('>>> Bloc menerima RegisterRequested'); // ← tambah ini
-    print('>>> name=${event.name}, email=${event.email}'); // ← tambah ini
+    // print('>>> Bloc menerima RegisterRequested'); // ← tambah ini
+    // print('>>> name=${event.name}, email=${event.email}'); // ← tambah ini
     emit(const AuthLoading());
     final result = await registerUsecase(
       RegisterParams(
@@ -64,11 +68,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
     result.fold(
       (failure) {
-        print('>>> Failure: ${failure.message}'); // ← tambah ini
+        // print('>>> Failure: ${failure.message}'); // ← tambah ini
         emit(_mapFailureToState(failure));
       },
       (user) {
-        print('>>> Success: ${user.email}'); // ← tambah ini
+        // print('>>> Success: ${user.email}'); // ← tambah ini
         emit(Authenticated(user));
       },
     );
@@ -99,8 +103,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   AuthState _mapFailureToState(Failure failure) {
-    print('>>> Failure type: ${failure.runtimeType}');
-    print('>>> Failure message: ${failure.message}');
+    // print('>>> Failure type: ${failure.runtimeType}');
+    // print('>>> Failure message: ${failure.message}');
 
     if (failure is EmailNotVerifiedFailure) {
       return const AuthEmailNotVerified('Email belum diverifikasi');
@@ -134,6 +138,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     result.fold(
       (failure) => emit(AuthFailure(failure.message)),
       (_) => emit(const AuthInitial()), 
+    );
+  }
+  
+  Future<void> _onGoogleLoginRequested(
+    GoogleLoginRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    final result = await googleLoginUsecase(event.idToken);
+    result.fold(
+      (failure) => emit(_mapFailureToState(failure)),
+      (user) => emit(Authenticated(user)),
     );
   }
 }

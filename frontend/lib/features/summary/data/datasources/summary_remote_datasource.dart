@@ -61,9 +61,9 @@ class SummaryRemoteDataSourceImpl implements SummaryRemoteDataSource {
           file.path,
           filename: file.uri.pathSegments.last,
         ),
-        if (length != null) 'length': length,
-        if (makeQuiz != null) 'make_quiz': makeQuiz,
-        if (quizCount != null) 'quiz_count': quizCount,
+        'length': ?length,
+        'makeQuiz': ?makeQuiz,
+        'quizCount': ?quizCount,
       });
       final response = await dio.post(
         '/documents',

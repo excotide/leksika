@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Http;
 
 class AuthController extends Controller
 {
@@ -175,6 +176,60 @@ class AuthController extends Controller
         return response()->json([
             'status'  => true,
             'message' => 'Berhasil logout.',
+        ]);
+    }
+
+    // --- LOGIN WITH GOOGLE ---
+    public function loginWithGoogle(Request $request)
+    {
+        $request->validate([
+            'id_token' => 'required|string',
+        ]);
+
+        // Verifikasi idToken ke Google
+        $response = Http::get('https://oauth2.googleapis.com/tokeninfo', [
+            'id_token' => $request->id_token,
+        ]);
+
+        if ($response->failed()) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Token Google tidak valid.',
+            ], 401);
+        }
+
+        $googleUser = $response->json();
+
+        // Pastikan token valid
+        if (!isset($googleUser['email'])) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Gagal mendapatkan data dari Google.',
+            ], 401);
+        }
+
+        // Cari atau buat user
+        $user = User::firstOrCreate(
+            ['email' => $googleUser['email']],
+            [
+                'name'              => $googleUser['name'] ?? $googleUser['email'],
+                'password'          => Hash::make(str()->random(32)),
+                'email_verified_at' => now(), // Google sudah verifikasi email
+            ]
+        );
+
+        // Kalau user lama belum verified, verifikasi sekarang
+        if (!$user->hasVerifiedEmail()) {
+            $user->markEmailAsVerified();
+        }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Login dengan Google berhasil!',
+            'token'   => $token,
+            'user'    => $user,
         ]);
     }
 }

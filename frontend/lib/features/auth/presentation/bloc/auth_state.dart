@@ -58,3 +58,10 @@ class UserLoaded extends AuthState {
   @override
   List<Object?> get props => [user];
 }
+
+class GoogleLoginLoading extends AuthState {}
+class GoogleLoginSuccess extends AuthState {}
+class GoogleLoginFailure extends AuthState {
+  final String message;
+  const GoogleLoginFailure(this.message);
+}

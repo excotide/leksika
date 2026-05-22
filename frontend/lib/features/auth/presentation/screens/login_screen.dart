@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:leksika/core/services/google_auth_service.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_event.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_state.dart';
@@ -34,6 +35,13 @@ class _LoginScreenState extends State<LoginScreen> {
             password: _passwordController.text,
           ),
         );
+  }
+
+  Future<void> _googleSignIn() async {
+    final idToken = await GoogleAuthService.getIdToken();
+    if (idToken == null) return;
+    if (!mounted) return;
+    context.read<AuthBloc>().add(GoogleLoginRequested(idToken));
   }
 
   @override
@@ -172,11 +180,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.circular(15),
                               ),
                             ),
-                            icon: const Icon(Icons.g_mobiledata,
-                                size: 30, color: Colors.blue),
-                            label: const Text('Google',
-                                style: TextStyle(color: Colors.black)),
-                            onPressed: isLoading ? null : () {},
+                            icon: isLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.g_mobiledata, size: 30, color: Colors.blue),
+                            label: Text(
+                              isLoading ? 'Memuat...' : 'Google',
+                              style: const TextStyle(color: Colors.black),
+                            ),
+                            onPressed: isLoading ? null : _googleSignIn,
                           ),
                           const SizedBox(height: 25),
                           Row(

@@ -7,6 +7,7 @@ import 'package:leksika/features/auth/data/datasources/auth_remote_datasource.da
 import 'package:leksika/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:leksika/features/auth/domain/repositories/auth_repository.dart';
 import 'package:leksika/features/auth/domain/usecases/get_user_usecase.dart';
+import 'package:leksika/features/auth/domain/usecases/google_login_usecase.dart';
 import 'package:leksika/features/auth/domain/usecases/login_usecase.dart';
 import 'package:leksika/features/auth/domain/usecases/register_usecase.dart';
 import 'package:leksika/features/auth/domain/usecases/resend_otp_usecase.dart';
@@ -62,6 +63,11 @@ Future<void> init() async {
     ..registerLazySingleton<LogoutUsecase>(
       () => LogoutUsecase(sl<AuthRepository>()),
     )
+
+    ..registerLazySingleton<GoogleLoginUsecase>(
+      () => GoogleLoginUsecase(sl<AuthRepository>()),
+    )
+
     ..registerFactory<AuthBloc>(
       () => AuthBloc(
         loginUsecase: sl<LoginUsecase>(),
@@ -70,6 +76,7 @@ Future<void> init() async {
         resendOtpUsecase: sl<ResendOtpUsecase>(),
         getUserUsecase: sl<GetUserUsecase>(),
         logoutUsecase: sl<LogoutUsecase>(),
+        googleLoginUsecase: sl<GoogleLoginUsecase>(),
       ),
     );
 
@@ -96,6 +103,4 @@ Future<void> init() async {
         uploadDocumentUsecase: sl<UploadDocumentUsecase>(),
       ),
     );
-
-  
 }

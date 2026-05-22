@@ -64,7 +64,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, void>> verifyOtp({required String otp}) async {
     try {
       await remoteDataSource.verifyOtp(otp: otp);
-      return const Right(unit);
+      return const Right(null);
     } on UnauthorizedException {
       return Left(UnauthorizedFailure());
     } on ServerException {
@@ -76,7 +76,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, void>> resendOtp() async {
     try {
       await remoteDataSource.resendOtp();
-      return const Right(unit);
+      return const Right(null);
     } on UnauthorizedException {
       return Left(UnauthorizedFailure());
     } on ServerException {
@@ -114,10 +114,23 @@ class AuthRepositoryImpl implements AuthRepository {
       
       await secureStorage.clearToken(); 
       
-      return const Right(unit); 
+      return const Right(null); 
     } catch (e) {
       await secureStorage.clearToken();
-      return const Right(unit);
+      return const Right(null);
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> loginWithGoogle(String idToken) async {
+    try {
+      final user = await remoteDataSource.loginWithGoogle(idToken);
+      await _persistToken(user.token);
+      return Right(user);
+    } on UnauthorizedException {
+      return Left(UnauthorizedFailure());
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
     }
   }
 }

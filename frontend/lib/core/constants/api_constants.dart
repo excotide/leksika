@@ -1,3 +1,3 @@
 class ApiConstants {
-  static const String baseUrl = 'https://leksika.dev/api';
+  static const String baseUrl = 'https://leksika.onrender.com/api';
 }

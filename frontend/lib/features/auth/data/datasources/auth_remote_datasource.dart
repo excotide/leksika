@@ -19,6 +19,8 @@ abstract class AuthRemoteDataSource {
   Future<UserModel> getUser();
 
   Future<void> logout();
+
+  Future<UserModel> loginWithGoogle(String idToken);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -50,7 +52,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String passwordConfirmation,
   }) async {
     try {
-      print('>>> Register payload: name=$name, email=$email');
+      // print('>>> Register payload: name=$name, email=$email');
       final response = await dio.post(
         '/register',
         data: {
@@ -88,10 +90,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   Never _handleDioError(DioException error) {
-    print('>>> DioException type: ${error.type}');
-    print('>>> Status code: ${error.response?.statusCode}');
-    print('>>> Response data: ${error.response?.data}');
-    print('>>> Message: ${error.message}');
+    // print('>>> DioException type: ${error.type}');
+    // print('>>> Status code: ${error.response?.statusCode}');
+    // print('>>> Response data: ${error.response?.data}');
+    // print('>>> Message: ${error.message}');
 
     final statusCode = error.response?.statusCode ?? 0;
     if (statusCode == 401) throw UnauthorizedException();
@@ -115,6 +117,19 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<void> logout() async {
     try {
       await dio.post('/logout'); 
+    } on DioException catch (error) {
+      _handleDioError(error);
+    }
+  }
+
+  @override
+  Future<UserModel> loginWithGoogle(String idToken) async {
+    try {
+      final response = await dio.post(
+        '/auth/google',
+        data: {'id_token': idToken},
+      );
+      return UserModel.fromAuthResponse(response.data as Map<String, dynamic>);
     } on DioException catch (error) {
       _handleDioError(error);
     }

@@ -59,7 +59,7 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
               context,
               PageRouteBuilder(
                 opaque: false,
-                pageBuilder: (_, __, ___) => const RangkumanLoadingOverlay(),
+                pageBuilder: (_, _, _) => const RangkumanLoadingOverlay(),
               ),
             );
           } else if (state is SummaryDetailLoaded) {
@@ -208,7 +208,7 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
               side: const BorderSide(color: Color(0xFF81B8A5), width: 1.5),
             ),
             borderRadius: BorderRadius.circular(24),
-            color: Colors.white.withOpacity(0.5),
+            color: Colors.white.withValues(alpha: 0.5),
           ),
           child: Column(
             children: [
@@ -278,7 +278,7 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
             Switch(
               value: _buatFlashcard,
               onChanged: (val) => setState(() => _buatFlashcard = val),
-              activeColor: Colors.white,
+              activeThumbColor: Colors.white,
               activeTrackColor: const Color(0xFF006947),
               inactiveThumbColor: Colors.white,
               inactiveTrackColor: const Color(0xFFCCCCCC),

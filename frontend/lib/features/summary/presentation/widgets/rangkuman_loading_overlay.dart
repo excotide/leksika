@@ -55,7 +55,7 @@ class _RangkumanLoadingOverlayState extends State<RangkumanLoadingOverlay> {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: Colors.black.withOpacity(0.6),
+        backgroundColor: Colors.black.withValues(alpha: 0.6),
         body: AbsorbPointer(
           absorbing: !_showCancel,
           child: Center(
