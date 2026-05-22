@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Models\Summary;
 use App\Models\Flashcard; 
+use App\Models\Notification; 
 use App\Services\SummaryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -18,7 +19,7 @@ class DocumentController extends Controller
     {
         $user = $request->user();
         $history = Document::where('user_id', $user->id)
-            ->with(['summary', 'flashcards']) 
+            ->with(['summary', 'flashcards', 'notifications']) 
             ->latest()
             ->get();
 
@@ -57,7 +58,6 @@ class DocumentController extends Controller
                 throw new \Exception("File tidak memiliki teks yang cukup untuk dirangkum.");
             }
 
-            // CUT-OFF DAFTAR PUSTAKA / REFERENSI
             $cleanText = $text;
             $patterns = [
                 '/\bREFERENSI\b/i', 
@@ -79,12 +79,10 @@ class DocumentController extends Controller
                 'extraction_engine' => (string) config('document_extraction.engine', 'php'),
             ]);
 
-            // Ambil parameter konfigurasi dari user
             $lengthParam = $request->input('length', 'Sedang');
             $wantsQuiz = filter_var($request->input('make_quiz'), FILTER_VALIDATE_BOOLEAN);
             $quizCountParam = $request->input('quiz_count', '5 Soal');
 
-            // --- PROMPT UNIVERSAL DINAMIS ---
             $optimizedPrompt = "Anda adalah seorang AI Edukasi yang bertugas melakukan analisis dan dekonstruksi materi akademik secara mendalam.
 Tugas Anda adalah membedah teks materi yang diberikan, mengekstrak gagasan utama, teori pokok, metodologi, serta definisi dari SETIAP ISTILAH TEKNIS PENTING yang ada di dalam teks tersebut, lalu menyusunnya ke dalam bentuk poin-poin Markdown yang informatif.
 
@@ -106,7 +104,6 @@ PANDUAN KETAT KONTEN RANGKUMAN:
   }
 ]" : "");
 
-            // Mengirim data ke Service AI
             $summaryText = $aiService->getGroqSummary(
                 $cleanText,             
                 $optimizedPrompt,   
@@ -114,7 +111,6 @@ PANDUAN KETAT KONTEN RANGKUMAN:
                 $quizCountParam
             );
 
-            // VALIDASI RESPONS TEKS DARI AI
             if (
                 !$summaryText || 
                 strlen(trim($summaryText)) < 20 || 
@@ -123,29 +119,23 @@ PANDUAN KETAT KONTEN RANGKUMAN:
                 throw new \Exception("AI gagal menghasilkan output rangkuman yang valid untuk dokumen ini.");
             }
 
-            // --- PROSES PARSING & PEMBERSIHAN TOTAL ---
+            $flashcardSavedCount = 0;
             $pureSummary = $summaryText;
             $flashcardJson = null;
 
             if (preg_match('/\[\s*\{.*\}\s*\]/s', $summaryText, $matches)) {
                 $flashcardJson = $matches[0]; 
-                
-                // Pisahkan string JSON dari teks mentah utama
                 $pureSummary = trim(str_replace($flashcardJson, '', $summaryText));
             }
 
-            // --- REVISI REGEX PENYAPU BERSIH JUDUL KUIS ---
-            // Memotong teks secara agresif jika mendeteksi kata penanda judul kuis di akhir dokumen rangkuman
             $pureSummary = preg_replace('/(\*\*|#)*\s*(Soal Kuis|Pertanyaan dan Jawaban|Kuis|Latihan|Flashcard|Jawaban).*/is', '', $pureSummary);
             $pureSummary = trim($pureSummary);
 
-            // 1. Simpan rangkuman bersih (Markdown murni bebas ampas judul kuis)
             $summary = Summary::create([
                 'document_id' => $document->id,
                 'summary_text' => $pureSummary,
             ]);
 
-            // 2. Loop data JSON dan simpan ke tabel flashcards
             if ($wantsQuiz && $flashcardJson) {
                 $quizArray = json_decode($flashcardJson, true);
 
@@ -158,9 +148,36 @@ PANDUAN KETAT KONTEN RANGKUMAN:
                                 'question'    => $quiz['question'],
                                 'answer'      => $quiz['answer'],
                             ]);
+                            $flashcardSavedCount++; 
                         }
                     }
                 }
+            }
+
+            Notification::create([
+                'user_id'     => $request->user()->id,
+                'document_id' => $document->id,
+                'title'       => 'Rangkuman Siap! 📚',
+                'message'     => "Rangkuman untuk dokumen " . $file->getClientOriginalName() . " sudah siap! Yuk pelajari materi intinya sekarang.",
+                'type'        => 'summary_success',
+                'is_read'     => DB::raw('false')
+            ]);
+
+            if ($wantsQuiz && $flashcardSavedCount > 0) {
+                Notification::create([
+                    'user_id'     => $request->user()->id,
+                    'document_id' => $document->id,
+                    'title'       => 'Asah Otak Sekarang! 🧠',
+                    'message'     => "Rangkuman & Flashcard sudah siap. Yuk langsung uji pemahaman awalmu untuk mengunci ingatan!",
+                    'type'        => 'quiz_reminder',
+                    'is_read'     => DB::raw('false')
+                ]);
+
+                \App\Jobs\SendQuizReminderJob::dispatch(
+                    $request->user()->id, 
+                    $document->id, 
+                    3
+                )->delay(now()->addDays(3));
             }
 
             DB::commit();
@@ -209,7 +226,7 @@ PANDUAN KETAT KONTEN RANGKUMAN:
     public function show(Request $request, $id)
     {
         $document = Document::where('user_id', $request->user()->id)
-            ->with(['summary', 'flashcards']) 
+            ->with(['summary', 'flashcards', 'notifications']) 
             ->find($id);
 
         if (!$document) {

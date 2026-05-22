@@ -22,4 +22,9 @@ class Document extends Model
     {
         return $this->hasMany(Flashcard::class);
     }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
 }
