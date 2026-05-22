@@ -17,4 +17,9 @@ class Document extends Model
     {
         return $this->hasOne(Summary::class);
     }
+
+    public function flashcards()
+    {
+        return $this->hasMany(Flashcard::class);
+    }
 }
