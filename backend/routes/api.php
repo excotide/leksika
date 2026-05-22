@@ -23,18 +23,30 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     Route::get('/documents', [DocumentController::class, 'index']);
 
+    Route::post('/documents', [DocumentController::class, 'store']);
+
     Route::get('/documents/{id}', [DocumentController::class, 'show']);
 
-    Route::post('/documents', [DocumentController::class, 'store']);
 
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
 
     Route::get('/notifications', [NotificationController::class, 'index']);
-    Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
-    
+
     Route::put('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
-    
+
+    Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+
     Route::post('/notifications/simulate-reminder', [NotificationController::class, 'triggerReminderSimulation']);
+
+    Route::get('/user/streak', function (Request $request) {
+        $streakHelper = new \App\Helpers\StreakHelper();
+        $streak = $streakHelper->getStreakForDisplay($request->user()->id);
+        
+        return response()->json([
+            'status' => true,
+            'data' => $streak
+        ]);
+    });
 });

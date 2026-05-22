@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\StreakHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Models\Summary;
@@ -179,6 +180,9 @@ PANDUAN KETAT KONTEN RANGKUMAN:
                     3
                 )->delay(now()->addDays(3));
             }
+
+            $streakHelper = new StreakHelper();
+            $streakHelper->updateStreak($request->user()->id);
 
             DB::commit();
 
