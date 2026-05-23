@@ -22,7 +22,7 @@ class RiwayatScreenState extends State<RiwayatScreen> {
     return BlocProvider(
       create: (_) => sl<SummaryBloc>()..add(const FetchDocumentsRequested()),
       child: Scaffold(
-        backgroundColor: const Color(0xFFE8FAF2), 
+        backgroundColor: const Color(0xFFE8FAF2),
         floatingActionButton: FloatingActionButton(
           onPressed: () => Navigator.pushNamed(context, '/create-rangkuman'),
           backgroundColor: const Color(0xFF006947),
@@ -49,7 +49,7 @@ class RiwayatScreenState extends State<RiwayatScreen> {
                   child: Column(
                     children: [
                       _buildHistorySection(),
-                      const SizedBox(height: 100), 
+                      const SizedBox(height: 100),
                     ],
                   ),
                 ),
@@ -70,7 +70,7 @@ class RiwayatScreenState extends State<RiwayatScreen> {
             child: LoadingWidget(message: 'Memuat riwayat...'),
           );
         }
-        
+
         if (state is SummaryFailure) {
           return Padding(
             padding: const EdgeInsets.all(20),
@@ -80,7 +80,7 @@ class RiwayatScreenState extends State<RiwayatScreen> {
             ),
           );
         }
-        
+
         if (state is SummaryListLoaded) {
           if (state.documents.isEmpty) {
             return Center(
@@ -99,14 +99,14 @@ class RiwayatScreenState extends State<RiwayatScreen> {
               ),
             );
           }
-          
+
           return Column(
             children: state.documents
                 .map((doc) => _buildHistoryCardFromDocument(context, doc))
                 .toList(),
           );
         }
-        
+
         return const SizedBox.shrink();
       },
     );
@@ -135,13 +135,28 @@ class RiwayatScreenState extends State<RiwayatScreen> {
               ),
               const Text(
                 'Riwayat Rangkuman',
-                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              Container(
-                width: 38,
-                height: 38,
-                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                child: const Icon(Icons.notifications_none_outlined, color: Color(0xFF006947), size: 20),
+              // ✅ FIX: GestureDetector ditambahkan di sini
+              GestureDetector(
+                onTap: () => Navigator.pushNamed(context, '/notifikasi'),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.notifications_none_outlined,
+                    color: Color(0xFF006947),
+                    size: 20,
+                  ),
+                ),
               ),
             ],
           ),
@@ -154,7 +169,7 @@ class RiwayatScreenState extends State<RiwayatScreen> {
     final title = doc.title.isEmpty ? 'Untitled Document' : doc.title;
     final desc = doc.summary;
     final time = _formatDate(doc.createdAt);
-    
+
     return GestureDetector(
       onTap: () {
         Navigator.pushNamed(
@@ -213,7 +228,7 @@ class RiwayatScreenState extends State<RiwayatScreen> {
             const SizedBox(height: 6),
             Text(
               desc,
-              maxLines: 3, 
+              maxLines: 3,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: Color(0xFF2F6555),

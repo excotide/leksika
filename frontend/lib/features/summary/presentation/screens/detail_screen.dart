@@ -43,7 +43,6 @@ class SummaryDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Menampilkan daftar kartu konten
                   ...contents.map((data) => _buildContentCard(
                         data['subTitle'] ?? '',
                         data['body'] ?? '',
@@ -57,7 +56,7 @@ class SummaryDetailScreen extends StatelessWidget {
     );
   }
 
- Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -82,11 +81,15 @@ class SummaryDetailScreen extends StatelessWidget {
                 'Rangkuman',
                 style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              Container(
-                width: 38,
-                height: 38,
-                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                child: const Icon(Icons.notifications_none_outlined, color: Color(0xFF006947), size: 20),
+              // ✅ FIX: GestureDetector ditambahkan
+              GestureDetector(
+                onTap: () => Navigator.pushNamed(context, '/notifikasi'),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: const Icon(Icons.notifications_none_outlined, color: Color(0xFF006947), size: 20),
+                ),
               ),
             ],
           ),
@@ -119,7 +122,7 @@ class SummaryDetailScreen extends StatelessWidget {
           const Divider(color: Color(0xFFB7EDD9), height: 24),
           MarkdownBody(
             data: body,
-            selectable: true, 
+            selectable: true,
             styleSheet: MarkdownStyleSheet(
               p: const TextStyle(
                 fontSize: 15,

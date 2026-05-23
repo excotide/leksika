@@ -105,10 +105,13 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           ),
           Row(
-            children: [
-              _buildTopIcon(Icons.notifications_none_outlined),
-              const SizedBox(width: 10),
-              GestureDetector(
+  children: [
+    GestureDetector(                                    // ← TAMBAH INI
+      onTap: () => Navigator.pushNamed(context, '/notifikasi'),
+      child: _buildTopIcon(Icons.notifications_none_outlined),
+    ),
+    const SizedBox(width: 10),
+    GestureDetector(
                 onTap: () => _showLogoutConfirmation(context),
                 child: _buildTopIcon(
                   Icons.logout_rounded,

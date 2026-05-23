@@ -181,11 +181,15 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
                 'Buat Rangkuman',
                 style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              Container(
-                width: 38,
-                height: 38,
-                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                child: const Icon(Icons.notifications_none_outlined, color: Color(0xFF006947), size: 20),
+              // ✅ FIX: GestureDetector ditambahkan
+              GestureDetector(
+                onTap: () => Navigator.pushNamed(context, '/notifikasi'),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: const Icon(Icons.notifications_none_outlined, color: Color(0xFF006947), size: 20),
+                ),
               ),
             ],
           ),

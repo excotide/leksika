@@ -11,6 +11,7 @@ import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:leksika/features/summary/presentation/screens/create_rangkuman_screen.dart';
 import 'package:leksika/features/summary/presentation/screens/detail_screen.dart';
 import 'package:leksika/features/summary/presentation/screens/home_screen.dart';
+import 'package:leksika/features/summary/presentation/screens/notification.dart'; // ← tambahan
 import 'package:leksika/features/summary/presentation/screens/riwayat_screen.dart';
 import 'package:leksika/features/summary/presentation/screens/summary_screen.dart';
 import 'package:leksika/shared/widgets/placeholder_screen.dart';
@@ -49,6 +50,8 @@ class AppRouter {
         );
       case '/home':
         return SmoothPageRoute(page: const HomeScreen());
+      case '/notifikasi': // ← tambahan
+        return SmoothPageRoute(page: const NotificationScreen());
       case '/riwayat':
         return SmoothPageRoute(page: const RiwayatScreen());
       case '/create-rangkuman':
@@ -66,7 +69,8 @@ class AppRouter {
           page: const PlaceholderScreen(title: 'Profil'),
         );
       default:
-        return SmoothPageRoute(page: const PlaceholderScreen(title: 'Not Found'));
+        return SmoothPageRoute(
+            page: const PlaceholderScreen(title: 'Not Found'));
     }
   }
 
