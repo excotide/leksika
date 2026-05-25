@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'dart:math';
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -15,109 +15,204 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 5), () {
-      if (mounted) {
-        setState(() {
-          isSecondSplash = true;
-        });
-      }
-
-      Timer(const Duration(seconds: 5), () {
-        if (mounted) {
-          Navigator.pushReplacementNamed(context, '/onboarding');
-        }
+    Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => isSecondSplash = true);
+      Timer(const Duration(seconds: 3), () {
+        if (mounted) Navigator.pushReplacementNamed(context, '/onboarding');
       });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    const figmaGreen = Color(0xFF3F8A7D);
+    const bgColor = Color(0xFF337165);
+    final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: figmaGreen,
+      backgroundColor: bgColor,
       body: Stack(
         children: [
           Positioned(
-            top: -150,
-            left: -150,
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.05),
-              ),
-            ),
+            top: -size.height * 0.15,
+            left: size.width * 0.5 - size.width * 0.55,
+            child: _circle(size.width * 1.1, Colors.white, 0.10),
           ),
           Positioned(
-            bottom: -100,
-            right: -100,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.05),
-              ),
-            ),
+            top: -size.height * 0.12,
+            left: -size.width * 0.30,
+            child: _circle(size.width * 0.70, Colors.white, 0.08),
           ),
-          SizedBox.expand(
+          Positioned(
+            top: size.height * 0.30,
+            right: -size.width * 0.30,
+            child: _circle(size.width * 0.70, Colors.white, 0.08),
+          ),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 600),
             child: isSecondSplash
-                ? _buildSplash2()
-                : Center(child: _buildSplash1()),
+                ? _buildSplash2(key: const ValueKey('s2'))
+                : _buildSplash1(key: const ValueKey('s1')),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSplash1() {
-    return const Text(
-      'AI Study Assistant',
-      style: TextStyle(
-        color: Colors.white70,
-        fontSize: 16,
-        fontWeight: FontWeight.w400,
+  Widget _circle(double size, Color color, double opacity) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: color.withOpacity(opacity),
       ),
     );
   }
 
-  Widget _buildSplash2() {
-    return Column(
-      children: [
-        const Spacer(flex: 3),
-        const Icon(Icons.book_outlined, size: 90, color: Colors.white),
-        const SizedBox(height: 25),
-        const Text(
-          'LEKSIKA',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 4,
-          ),
-        ),
-        const SizedBox(height: 12),
-        const Text(
+  Widget _buildSplash1({Key? key}) {
+    return SizedBox.expand(
+      key: key,
+      child: const Center(
+        child: Text(
           'AI Study Assistant',
           style: TextStyle(
             color: Colors.white70,
             fontSize: 16,
+            fontWeight: FontWeight.w400,
+            letterSpacing: 1.2,
           ),
         ),
-        const Spacer(flex: 3),
-        const Padding(
-          padding: EdgeInsets.only(bottom: 30),
-          child: Text(
-            'Belajar lebih cerdas, Bukan lebih keras.',
-            style: TextStyle(
-              color: Colors.white60,
-              fontSize: 12,
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
+
+  Widget _buildSplash2({Key? key}) {
+    // Lingkaran dalam: 80x80, icon buku: 42px
+    // Pojok kanan atas buku ~ right = (80-42)/2 = 19, top = 19
+    // Bintang 18px: top=12, right=12
+    return SizedBox.expand(
+      key: key,
+      child: Column(
+        children: [
+          const Spacer(flex: 3),
+          Container(
+            width: 110,
+            height: 110,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.18),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: SizedBox(
+                width: 80,
+                height: 80,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // Lingkaran dalam warna AFEBE4
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFAFEBE4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.menu_book_rounded,
+                          size: 42,
+                          color: Color(0xFF337165),
+                        ),
+                      ),
+                    ),
+                    // Bintang di pojok kanan atas buku
+                    const Positioned(
+                      top: 12,
+                      right: 12,
+                      child: CustomPaint(
+                        size: Size(18, 18),
+                        painter: _FourPointStarPainter(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 28),
+          const Text(
+            'LEKSIKA',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 5,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'AI Study Assistant',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 15,
+              letterSpacing: 1,
+            ),
+          ),
+          const Spacer(flex: 3),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 36),
+            child: Text(
+              'Belajar lebih cerdas, Bukan lebih keras.',
+              style: TextStyle(
+                color: Colors.white60,
+                fontSize: 12,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FourPointStarPainter extends CustomPainter {
+  final Color color;
+  const _FourPointStarPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final outer = size.width / 2;
+    final inner = size.width * 0.18;
+
+    final path = Path();
+    for (int i = 0; i < 4; i++) {
+      final outerAngle = (i * pi / 2) - pi / 2;
+      final innerAngle1 = outerAngle + pi / 4;
+      final innerAngle2 = outerAngle - pi / 4;
+
+      final px = cx + outer * cos(outerAngle);
+      final py = cy + outer * sin(outerAngle);
+      final ix1 = cx + inner * cos(innerAngle2);
+      final iy1 = cy + inner * sin(innerAngle2);
+      final ix2 = cx + inner * cos(innerAngle1);
+      final iy2 = cy + inner * sin(innerAngle1);
+
+      if (i == 0) {
+        path.moveTo(ix1, iy1);
+      } else {
+        path.lineTo(ix1, iy1);
+      }
+      path.lineTo(px, py);
+      path.lineTo(ix2, iy2);
+    }
+    path.close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
