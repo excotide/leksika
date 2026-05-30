@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_event.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_state.dart';
+import 'package:leksika/features/auth/presentation/screens/syarat_ketentuan_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -42,6 +44,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
             passwordConfirmation: _passwordConfirmationController.text,
           ),
         );
+  }
+
+  // ✅ Buka halaman Syarat & Ketentuan, lalu set _isAgree jika user setuju
+  Future<void> _openSyaratKetentuan() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const SyaratKetentuanScreen(),
+      ),
+    );
+    if (result == true) {
+      setState(() => _isAgree = true);
+    }
   }
 
   @override
@@ -104,7 +119,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           SizedBox(height: 10),
                           Text(
                             'Become a Leksikans today and unlock your AI superpower',
-                            style: TextStyle(color: Color(0xFF4A8F83), fontSize: 14),
+                            style: TextStyle(
+                                color: Color(0xFF4A8F83), fontSize: 14),
                           ),
                         ],
                       ),
@@ -177,12 +193,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             },
                             onToggle: () {
                               setState(() {
-                                _obscureConfirmPassword = !_obscureConfirmPassword;
+                                _obscureConfirmPassword =
+                                    !_obscureConfirmPassword;
                               });
                             },
                           ),
                           const SizedBox(height: 15),
+
+                          // ✅ FIX: Checkbox + teks "Terms of Service" yang bisa diklik
                           Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Checkbox(
                                 value: _isAgree,
@@ -191,14 +211,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     : (v) => setState(() => _isAgree = v!),
                                 activeColor: const Color(0xFF006947),
                               ),
-                              const Expanded(
-                                child: Text(
-                                  'I agree to the Terms of Service and Privacy Policy',
-                                  style: TextStyle(fontSize: 11),
+                              Expanded(
+                                child: RichText(
+                                  text: TextSpan(
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.black87,
+                                    ),
+                                    children: [
+                                      const TextSpan(
+                                          text: 'I agree to the '),
+                                      TextSpan(
+                                        text: 'Terms of Service and Privacy Policy',
+                                        style: const TextStyle(
+                                          color: Color(0xFF006947),
+                                          fontWeight: FontWeight.bold,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = isLoading
+                                              ? null
+                                              : _openSyaratKetentuan,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],
                           ),
+
                           const SizedBox(height: 30),
                           SizedBox(
                             width: double.infinity,
@@ -231,7 +272,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           const SizedBox(height: 15),
                           TextButton(
-                            onPressed: isLoading ? null : () => Navigator.pop(context),
+                            onPressed:
+                                isLoading ? null : () => Navigator.pop(context),
                             child: const Text(
                               'Sudah punya akun? Log in',
                               style: TextStyle(color: Color(0xFF006947)),
@@ -273,7 +315,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             prefixIcon: Icon(icon, color: const Color(0xFF006947)),
             suffixIcon: isPassword
                 ? IconButton(
-                    icon: Icon(isObscured ? Icons.visibility_off : Icons.visibility),
+                    icon: Icon(
+                        isObscured ? Icons.visibility_off : Icons.visibility),
                     onPressed: onToggle,
                     color: Colors.grey,
                   )

@@ -7,6 +7,7 @@ import 'package:leksika/core/di/injection_container.dart';
 import 'package:leksika/features/summary/presentation/bloc/summary_bloc.dart';
 import 'package:leksika/features/summary/presentation/bloc/summary_event.dart';
 import 'package:leksika/features/summary/presentation/bloc/summary_state.dart';
+import 'package:leksika/features/summary/presentation/screens/pusat_bantuan_screen.dart';
 import 'package:leksika/features/summary/presentation/widgets/rangkuman_loading_overlay.dart';
 
 class CreateRangkumanScreen extends StatefulWidget {
@@ -71,7 +72,9 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
               context,
               '/detail',
               arguments: {
-                'title': state.document.title.isEmpty ? 'Hasil Rangkuman' : state.document.title,
+                'title': state.document.title.isEmpty
+                    ? 'Hasil Rangkuman'
+                    : state.document.title,
                 'pageCount': 'Proses AI',
                 'contents': [
                   {'subTitle': 'Ringkasan', 'body': state.document.summary},
@@ -99,7 +102,7 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
           }
         },
         child: Scaffold(
-          backgroundColor: const Color(0xFFEAFAF3),
+          backgroundColor: const Color(0xFFE8FAF2),
           body: Column(
             children: [
               _buildHeader(context),
@@ -121,7 +124,8 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
                         child: _buildDropdown(
                           value: _selectedPanjang,
                           items: _panjangOptions,
-                          onChanged: (val) => setState(() => _selectedPanjang = val!),
+                          onChanged: (val) =>
+                              setState(() => _selectedPanjang = val!),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -135,7 +139,8 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
                             child: _buildDropdown(
                               value: _selectedSoal,
                               items: _soalOptions,
-                              onChanged: (val) => setState(() => _selectedSoal = val!),
+                              onChanged: (val) =>
+                                  setState(() => _selectedSoal = val!),
                             ),
                           ),
                         ),
@@ -143,7 +148,7 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
                       const SizedBox(height: 32),
                       _buildSubmitButton(),
                       const SizedBox(height: 16),
-                      _buildHelpCenter(),
+                      _buildHelpCenter(context),
                       const SizedBox(height: 32),
                     ],
                   ),
@@ -174,21 +179,35 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
+                icon: const Icon(
+                  Icons.arrow_back_ios,
+                  color: Colors.white,
+                  size: 20,
+                ),
                 onPressed: () => Navigator.pop(context),
               ),
               const Text(
                 'Buat Rangkuman',
-                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              // ✅ FIX: GestureDetector ditambahkan
               GestureDetector(
                 onTap: () => Navigator.pushNamed(context, '/notifikasi'),
                 child: Container(
                   width: 38,
                   height: 38,
-                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                  child: const Icon(Icons.notifications_none_outlined, color: Color(0xFF006947), size: 20),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.notifications_none_outlined,
+                    color: Color(0xFF006947),
+                    size: 20,
+                  ),
                 ),
               ),
             ],
@@ -219,17 +238,32 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
               Container(
                 width: 64,
                 height: 64,
-                decoration: const BoxDecoration(color: Color(0xFF69F6B8), shape: BoxShape.circle),
-                child: const Icon(Icons.upload_file_outlined, size: 32, color: Color(0xFF006947)),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF69F6B8),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.upload_file_outlined,
+                  size: 32,
+                  color: Color(0xFF006947),
+                ),
               ),
               const SizedBox(height: 16),
               Text(
-                _selectedFile == null ? 'Tap untuk Upload File' : 'File Siap Diolah',
-                style: const TextStyle(color: Color(0xFF00362A), fontSize: 16, fontWeight: FontWeight.bold),
+                _selectedFile == null
+                    ? 'Tap untuk Upload File'
+                    : 'File Siap Diolah',
+                style: const TextStyle(
+                  color: Color(0xFF00362A),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
-                _selectedFile == null ? 'Dukung PDF, DOCX, atau Gambar' : _selectedFile!.path.split('/').last,
+                _selectedFile == null
+                    ? 'Dukung PDF, DOCX, atau Gambar'
+                    : _selectedFile!.path.split('/').last,
                 style: const TextStyle(color: Color(0xFF2F6555), fontSize: 13),
               ),
             ],
@@ -248,7 +282,11 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
           SizedBox(width: 6),
           Text(
             'Pengaturan Rangkuman',
-            style: TextStyle(color: Color(0xFF00362A), fontSize: 14, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: Color(0xFF00362A),
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -259,23 +297,44 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
             Container(
-              width: 40, height: 40,
-              decoration: BoxDecoration(color: const Color(0xFFEAFAF3), borderRadius: BorderRadius.circular(12)),
-              child: const Icon(Icons.style_outlined, color: Color(0xFF006947), size: 22),
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8FAF2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.style_outlined,
+                color: Color(0xFF006947),
+                size: 22,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
-                  Text('Buat Flashcard', style: TextStyle(color: Color(0xFF00362A), fontSize: 15, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Buat Flashcard',
+                    style: TextStyle(
+                      color: Color(0xFF00362A),
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   SizedBox(height: 2),
-                  Text('Otomatis buat kuis', style: TextStyle(color: Color(0xFF2F6555), fontSize: 12)),
+                  Text(
+                    'Otomatis buat kuis',
+                    style: TextStyle(color: Color(0xFF2F6555), fontSize: 12),
+                  ),
                 ],
               ),
             ),
@@ -298,7 +357,12 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
       child: Text(
         text,
-        style: const TextStyle(color: Color(0xFF2F6555), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+        style: const TextStyle(
+          color: Color(0xFF2F6555),
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
@@ -310,58 +374,94 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: ElevatedButton(
-            onPressed: isLoading ? null : () {
-              if (_selectedFile == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Pilih file terlebih dahulu!')),
-                );
-                return;
-              }
-              context.read<SummaryBloc>().add(
-                UploadDocumentRequested(
-                  filePath: _selectedFile!.path,
-                  length: _selectedPanjang,
-                  makeQuiz: _buatFlashcard ? 'Ya' : 'Tidak',
-                  quizCount: _selectedSoal,
-                ),
-              );
-            },
+            onPressed: isLoading
+                ? null
+                : () {
+                    if (_selectedFile == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Pilih file terlebih dahulu!'),
+                        ),
+                      );
+                      return;
+                    }
+                    context.read<SummaryBloc>().add(
+                      UploadDocumentRequested(
+                        filePath: _selectedFile!.path,
+                        length: _selectedPanjang,
+                        makeQuiz: _buatFlashcard ? 'Ya' : 'Tidak',
+                        quizCount: _selectedSoal,
+                      ),
+                    );
+                  },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF006947),
               foregroundColor: Colors.white,
               minimumSize: const Size(double.infinity, 58),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(9999),
+              ),
               elevation: 6,
             ),
-            child: const Text('Buat Rangkuman Sekarang', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Buat Rangkuman Sekarang',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
           ),
         );
       },
     );
   }
 
-  Widget _buildHelpCenter() {
+  // ✅ FIX: context sekarang diteruskan sebagai parameter agar Navigator bisa digunakan
+  Widget _buildHelpCenter(BuildContext context) {
     return Center(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.help_outline, color: Color(0xFF2F6555), size: 14),
-          SizedBox(width: 4),
-          Text('Need Help?', style: TextStyle(color: Color(0xFF2F6555), fontSize: 13, decoration: TextDecoration.underline)),
-        ],
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const PusatBantuanScreen(),
+            ),
+          );
+        },
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.help_outline, color: Color(0xFF2F6555), size: 14),
+            SizedBox(width: 4),
+            Text(
+              'Need Help?',
+              style: TextStyle(
+                color: Color(0xFF2F6555),
+                fontSize: 13,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildDropdown({required String value, required List<String> items, required void Function(String?) onChanged}) {
+  Widget _buildDropdown({
+    required String value,
+    required List<String> items,
+    required void Function(String?) onChanged,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
+          items: items
+              .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+              .toList(),
           onChanged: onChanged,
         ),
       ),
