@@ -14,6 +14,10 @@ import 'package:leksika/features/summary/presentation/screens/home_screen.dart';
 import 'package:leksika/features/summary/presentation/screens/notification.dart'; // ← tambahan
 import 'package:leksika/features/summary/presentation/screens/riwayat_screen.dart';
 import 'package:leksika/features/summary/presentation/screens/summary_screen.dart';
+import 'package:leksika/features/summary/presentation/screens/flashcard.dart';
+import 'package:leksika/features/summary/presentation/screens/isi_flashcard.dart';
+import 'package:leksika/features/summary/presentation/screens/profile.dart';
+import 'package:leksika/features/summary/presentation/screens/edit_profile.dart';
 import 'package:leksika/shared/widgets/placeholder_screen.dart';
 
 class AppRouter {
@@ -61,13 +65,13 @@ class AppRouter {
       case '/summary':
         return SmoothPageRoute(page: const SummaryScreen());
       case '/flashcard':
-        return SmoothPageRoute(
-          page: const PlaceholderScreen(title: 'Flashcard'),
-        );
+        return SmoothPageRoute(page: const FlashcardPage());
+      case '/isi-flashcard':
+        return SmoothPageRoute(page: const FlashcardDetailPage());
       case '/profil':
-        return SmoothPageRoute(
-          page: const PlaceholderScreen(title: 'Profil'),
-        );
+        return SmoothPageRoute(page: const SetelanPage());
+      case '/edit-profil':
+        return SmoothPageRoute(page: const EditProfilePage());
       default:
         return SmoothPageRoute(
             page: const PlaceholderScreen(title: 'Not Found'));
