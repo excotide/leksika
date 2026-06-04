@@ -87,7 +87,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   void _markAllRead() {
     setState(() {
-      for (final n in _allNotifs) n.isRead = true;
+      for (final n in _allNotifs) {
+        n.isRead = true;
+      }
     });
   }
 
@@ -195,7 +197,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -276,7 +278,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: _tipsCardColor.withOpacity(0.3),
+              color: _tipsCardColor.withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -301,7 +303,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 ),
                 Text(
                   item.time,
-                  style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.7)),
+                  style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.7)),
                 ),
               ],
             ),

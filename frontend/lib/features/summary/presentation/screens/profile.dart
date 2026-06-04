@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:leksika/core/di/injection_container.dart';
+import 'package:leksika/features/profile/domain/entities/profile_entity.dart';
+import 'package:leksika/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:leksika/features/profile/presentation/bloc/profile_event.dart';
+import 'package:leksika/features/profile/presentation/bloc/profile_state.dart';
 import 'package:leksika/features/summary/presentation/widgets/bottom_navbar.dart';
 
 class SetelanPage extends StatelessWidget {
@@ -6,8 +12,20 @@ class SetelanPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => sl<ProfileBloc>()..add(const LoadProfile()),
+      child: const _SetelanView(),
+    );
+  }
+}
+
+class _SetelanView extends StatelessWidget {
+  const _SetelanView();
+
+  @override
+  Widget build(BuildContext context) {
     // Scaffold adalah root widget halaman ini.
-    // backgroundColor 
+    // backgroundColor
     return Scaffold(
       backgroundColor: const Color(0xFFE8F5EE),
       appBar: AppBar(
@@ -35,62 +53,137 @@ class SetelanPage extends StatelessWidget {
       bottomNavigationBar: const BottomNavbar(activeIndex: 3),
 
       // ── Body ─────────────────────────────────────────────────
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+      body: BlocBuilder<ProfileBloc, ProfileState>(
+        builder: (context, state) {
+          if (state is ProfileLoading || state is ProfileInitial) {
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF004C31)),
+            );
+          }
+
+          if (state is ProfileError) {
+            return _ErrorView(
+              message: state.message,
+              onRetry: () =>
+                  context.read<ProfileBloc>().add(const LoadProfile()),
+            );
+          }
+
+          // ProfileLoaded / ProfileSubmitting / ProfileUpdated → punya data profil
+          final ProfileEntity profile = state is ProfileLoaded
+              ? state.profile
+              : state is ProfileUpdated
+                  ? state.profile
+                  : (state as ProfileSubmitting).profile;
+
+          return SingleChildScrollView(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+            child: Column(
+              children: [
+                _ProfileHeader(profile: profile),
+                const SizedBox(height: 20),
+
+                // 2. Stats Card (Materi & Streak)
+                _StatsCard(
+                  totalSummary: profile.totalSummary,
+                  totalStreak: profile.totalStreak,
+                ),
+                const SizedBox(height: 16),
+
+                // 3. Info Cards (Email, Institusi, Lokasi)
+                _InfoCard(
+                  icon: Icons.email_outlined,
+                  label: 'EMAIL',
+                  value: profile.email,
+                ),
+                const SizedBox(height: 10),
+                _InfoCard(
+                  icon: Icons.school_outlined,
+                  label: 'INSTITUSI',
+                  value: profile.institution?.isNotEmpty == true
+                      ? profile.institution!
+                      : '-',
+                ),
+                const SizedBox(height: 10),
+                _InfoCard(
+                  icon: Icons.location_on_outlined,
+                  label: 'LOKASI',
+                  value: profile.address?.isNotEmpty == true
+                      ? profile.address!
+                      : '-',
+                ),
+
+                const SizedBox(height: 24),
+
+                // 4. Tombol Edit Profile
+                _ActionButton(
+                  label: 'Edit Profile',
+                  icon: Icons.settings_outlined,
+                  backgroundColor: const Color(0xFF004C31),
+                  textColor: Colors.white,
+                  onPressed: () {
+                    final bloc = context.read<ProfileBloc>();
+                    Navigator.pushNamed(context, '/edit-profil')
+                        .then((_) => bloc.add(const LoadProfile()));
+                  },
+                ),
+
+                const SizedBox(height: 12),
+
+                // 5. Tombol Log Out
+                _ActionButton(
+                  label: 'Log Out',
+                  backgroundColor: const Color(0xFFD32F2F),
+                  textColor: Colors.white,
+                  onPressed: () {},
+                ),
+
+                const SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ============================================================
+// WIDGET — _ErrorView
+// Tampilan saat gagal memuat profil, dengan tombol coba lagi.
+// ============================================================
+class _ErrorView extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ErrorView({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const _ProfileHeader(),
-            const SizedBox(height: 20),
-
-            // 2. Stats Card (Materi & Streak)
-            const _StatsCard(),
-            const SizedBox(height: 16),
-
-            // 3. Info Cards (Email, Institusi, Lokasi)
-            const _InfoCard(
-              icon: Icons.email_outlined,
-              label: 'EMAIL',
-              value: 'julijulay@gmail.com',
-            ),
-            const SizedBox(height: 10),
-            const _InfoCard(
-              icon: Icons.school_outlined,
-              label: 'INSTITUSI',
-              value: 'Politeknik Elektronika Negeri Surabaya',
-            ),
-            const SizedBox(height: 10),
-            const _InfoCard(
-              icon: Icons.location_on_outlined,
-              label: 'LOKASI',
-              value: 'Karanggeneng, Lamongan',
-            ),
-
-            const SizedBox(height: 24),
-
-            // 4. Tombol Edit Profile 
-            _ActionButton(
-              label: 'Edit Profile',
-              icon: Icons.settings_outlined,
-              backgroundColor: const Color(0xFF004C31),
-              textColor: Colors.white,
-              onPressed: () {
-                Navigator.pushNamed(context, '/edit-profil');
-              },
-            ),
-
+            const Icon(Icons.error_outline,
+                color: Color(0xFF004C31), size: 40),
             const SizedBox(height: 12),
-
-            // 5. Tombol Log Out
-            _ActionButton(
-              label: 'Log Out',
-              backgroundColor: const Color(0xFFD32F2F),
-              textColor: Colors.white,
-              onPressed: () {
-                
-              },
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFF555555)),
             ),
-
             const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: onRetry,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF004C31),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Coba Lagi'),
+            ),
           ],
         ),
       ),
@@ -103,10 +196,15 @@ class SetelanPage extends StatelessWidget {
 // Menampilkan foto profil bulat, nama besar, dan bio di bawahnya.
 // ============================================================
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader();
+  const _ProfileHeader({required this.profile});
+
+  final ProfileEntity profile;
 
   @override
   Widget build(BuildContext context) {
+    final hasAvatar = profile.avatarUrl != null &&
+        profile.avatarUrl!.isNotEmpty;
+
     return Column(
       children: [
         // CircleAvatar: foto profil pengguna.
@@ -114,16 +212,19 @@ class _ProfileHeader extends StatelessWidget {
         CircleAvatar(
           radius: 48,
           backgroundColor: const Color(0xFFCCCCCC),
-          // Ganti dengan NetworkImage/AssetImage sesuai data user.
-          child: const Icon(Icons.person, size: 48, color: Colors.white),
+          backgroundImage:
+              hasAvatar ? NetworkImage(profile.avatarUrl!) : null,
+          child: hasAvatar
+              ? null
+              : const Icon(Icons.person, size: 48, color: Colors.white),
         ),
 
         const SizedBox(height: 12),
 
-        // Nama pengguna — bold, hijau tua, uppercase-feel lewat letterSpacing.
-        const Text(
-          'JULI AYU',
-          style: TextStyle(
+        // Nama pengguna — bold, hijau tua.
+        Text(
+          profile.name,
+          style: const TextStyle(
             color: Color(0xFF004C31),
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -134,9 +235,12 @@ class _ProfileHeader extends StatelessWidget {
         const SizedBox(height: 4),
 
         // Bio / deskripsi singkat — abu-abu gelap, ukuran lebih kecil.
-        const Text(
-          'Mahasiswa Teknik Informatika',
-          style: TextStyle(
+        Text(
+          profile.bio?.isNotEmpty == true
+              ? profile.bio!
+              : 'Belum ada bio',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
             color: Color(0xFF555555),
             fontSize: 13,
           ),
@@ -152,7 +256,13 @@ class _ProfileHeader extends StatelessWidget {
 // Dipisahkan oleh garis vertikal tipis di tengah.
 // ============================================================
 class _StatsCard extends StatelessWidget {
-  const _StatsCard();
+  const _StatsCard({
+    required this.totalSummary,
+    required this.totalStreak,
+  });
+
+  final int totalSummary;
+  final int totalStreak;
 
   @override
   Widget build(BuildContext context) {
@@ -175,12 +285,12 @@ class _StatsCard extends StatelessWidget {
         child: Row(
           children: [
             // Kolom kiri: Materi
-            const Expanded(
+            Expanded(
               child: _StatItem(
                 icon: Icons.menu_book_outlined,
-                iconColor: Color(0xFF004C31),
+                iconColor: const Color(0xFF004C31),
                 label: 'MATERI',
-                value: '10',
+                value: '$totalSummary',
               ),
             ),
 
@@ -192,13 +302,13 @@ class _StatsCard extends StatelessWidget {
             ),
 
             // Kolom kanan: Streak (ikon api, warna oranye)
-            const Expanded(
+            Expanded(
               child: _StatItem(
                 icon: Icons.local_fire_department_outlined,
-                iconColor: Color(0xFFFF6B00),
+                iconColor: const Color(0xFFFF6B00),
                 label: 'STREAK',
-                value: '7',
-                valueColor: Color(0xFFFF6B00),
+                value: '$totalStreak',
+                valueColor: const Color(0xFFFF6B00),
               ),
             ),
           ],

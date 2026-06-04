@@ -72,8 +72,12 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    for (final c in _controllers) c.dispose();
-    for (final f in _focusNodes) f.dispose();
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    for (final f in _focusNodes) {
+      f.dispose();
+    }
     super.dispose();
   }
 
@@ -87,7 +91,9 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   void _clearBoxes() {
-    for (final c in _controllers) c.clear();
+    for (final c in _controllers) {
+      c.clear();
+    }
     _focusNodes[0].requestFocus();
     setState(() {});
   }
@@ -144,7 +150,7 @@ class _OtpScreenState extends State<OtpScreen> {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -183,7 +189,7 @@ class _OtpScreenState extends State<OtpScreen> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: _greenMid.withOpacity(0.25),
+                          color: _greenMid.withValues(alpha: 0.25),
                           blurRadius: 24,
                           offset: const Offset(0, 8),
                         ),
@@ -222,7 +228,7 @@ class _OtpScreenState extends State<OtpScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: _greenMid.withOpacity(0.4)),
+                      border: Border.all(color: _greenMid.withValues(alpha: 0.4)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -315,7 +321,7 @@ class _OtpScreenState extends State<OtpScreen> {
                           : _verify,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _green,
-                        disabledBackgroundColor: _greenMid.withOpacity(0.4),
+                        disabledBackgroundColor: _greenMid.withValues(alpha: 0.4),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),

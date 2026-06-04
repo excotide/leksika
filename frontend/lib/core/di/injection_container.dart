@@ -19,6 +19,13 @@ import 'package:leksika/features/summary/data/repositories/summary_repository_im
 import 'package:leksika/features/summary/domain/repositories/summary_repository.dart';
 import 'package:leksika/features/summary/domain/usecases/get_summary_usecase.dart';
 import 'package:leksika/features/summary/presentation/bloc/summary_bloc.dart';
+import 'package:leksika/features/profile/data/datasources/profile_remote_datasource.dart';
+import 'package:leksika/features/profile/data/repositories/profile_repository_impl.dart';
+import 'package:leksika/features/profile/domain/repositories/profile_repository.dart';
+import 'package:leksika/features/profile/domain/usecases/get_profile_usecase.dart';
+import 'package:leksika/features/profile/domain/usecases/update_profile_usecase.dart';
+import 'package:leksika/features/profile/domain/usecases/upload_photo_usecase.dart';
+import 'package:leksika/features/profile/presentation/bloc/profile_bloc.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -101,6 +108,30 @@ Future<void> init() async {
         getDocumentsUsecase: sl<GetDocumentsUsecase>(),
         getDocumentDetailUsecase: sl<GetDocumentDetailUsecase>(),
         uploadDocumentUsecase: sl<UploadDocumentUsecase>(),
+      ),
+    );
+
+  sl
+    ..registerLazySingleton<ProfileRemoteDataSource>(
+      () => ProfileRemoteDataSourceImpl(sl<Dio>()),
+    )
+    ..registerLazySingleton<ProfileRepository>(
+      () => ProfileRepositoryImpl(sl<ProfileRemoteDataSource>()),
+    )
+    ..registerLazySingleton<GetProfileUsecase>(
+      () => GetProfileUsecase(sl<ProfileRepository>()),
+    )
+    ..registerLazySingleton<UpdateProfileUsecase>(
+      () => UpdateProfileUsecase(sl<ProfileRepository>()),
+    )
+    ..registerLazySingleton<UploadPhotoUsecase>(
+      () => UploadPhotoUsecase(sl<ProfileRepository>()),
+    )
+    ..registerFactory<ProfileBloc>(
+      () => ProfileBloc(
+        getProfileUsecase: sl<GetProfileUsecase>(),
+        updateProfileUsecase: sl<UpdateProfileUsecase>(),
+        uploadPhotoUsecase: sl<UploadPhotoUsecase>(),
       ),
     );
 }
