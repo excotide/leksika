@@ -55,27 +55,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     RegisterRequested event,
     Emitter<AuthState> emit,
   ) async {
-    // print('>>> Bloc menerima RegisterRequested'); // ← tambah ini
-    // print('>>> name=${event.name}, email=${event.email}'); // ← tambah ini
     emit(const AuthLoading());
-    final result = await registerUsecase(
-      RegisterParams(
-        name: event.name,
-        email: event.email,
-        password: event.password,
-        passwordConfirmation: event.passwordConfirmation,
-      ),
-    );
-    result.fold(
-      (failure) {
-        // print('>>> Failure: ${failure.message}'); // ← tambah ini
-        emit(_mapFailureToState(failure));
-      },
-      (user) {
-        // print('>>> Success: ${user.email}'); // ← tambah ini
-        emit(Authenticated(user));
-      },
-    );
+    try {
+      final result = await registerUsecase(
+        RegisterParams(
+          name: event.name,
+          email: event.email,
+          password: event.password,
+          passwordConfirmation: event.passwordConfirmation,
+        ),
+      );
+      result.fold(
+        (failure) => emit(_mapFailureToState(failure)),
+        (user) => emit(Authenticated(user)),
+      );
+    } catch (_) {
+      // Jaring pengaman: pastikan spinner selalu berhenti walau ada
+      // exception tak terduga (mis. respons non-JSON / parsing gagal).
+      emit(const AuthFailure('Terjadi kesalahan. Coba lagi.'));
+    }
   }
 
   Future<void> _onVerifyOtpRequested(

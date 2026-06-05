@@ -53,10 +53,14 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       await _persistToken(user.token);
       return Right(user);
+    } on EmailNotVerifiedException {
+      return Left(EmailNotVerifiedFailure());
     } on UnauthorizedException {
       return Left(UnauthorizedFailure());
-    } on ServerException {
-      return Left(ServerFailure());
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(const ServerFailure('Terjadi kesalahan. Coba lagi.'));
     }
   }
 
