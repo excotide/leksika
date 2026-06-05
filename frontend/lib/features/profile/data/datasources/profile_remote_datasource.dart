@@ -60,20 +60,22 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   Future<ProfileModel> uploadPhoto(String filePath) async {
     try {
       final file = File(filePath);
+      if (!await file.exists()) {
+        throw ServerException(message: 'File foto tidak ditemukan. Pilih ulang foto.');
+      }
+      final filename = file.uri.pathSegments.where((s) => s.isNotEmpty).lastOrNull
+          ?? 'photo.jpg';
       final formData = FormData.fromMap({
-        'photo': await MultipartFile.fromFile(
-          file.path,
-          filename: file.uri.pathSegments.last,
-        ),
+        'photo': await MultipartFile.fromFile(file.path, filename: filename),
       });
-      final response = await dio.post(
-        '/profile/photo',
-        data: formData,
-        options: Options(contentType: 'multipart/form-data'),
-      );
+      final response = await dio.post('/profile/photo', data: formData);
       return ProfileModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (error) {
       _handleDioError(error);
+    } on ServerException {
+      rethrow;
+    } catch (e) {
+      throw ServerException(message: 'Gagal memproses foto: $e');
     }
   }
 

@@ -63,13 +63,18 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     Emitter<ProfileState> emit,
   ) async {
     if (_lastProfile != null) emit(ProfileSubmitting(_lastProfile!));
-    final result = await uploadPhotoUsecase(event.filePath);
-    result.fold(
-      (failure) => emit(ProfileError(failure.message)),
-      (profile) {
-        _lastProfile = profile;
-        emit(ProfilePhotoUpdated(profile));
-      },
-    );
+    try {
+      final result = await uploadPhotoUsecase(event.filePath);
+      result.fold(
+        (failure) => emit(ProfileError(failure.message)),
+        (profile) {
+          _lastProfile = profile;
+          emit(ProfilePhotoUpdated(profile));
+        },
+      );
+    } catch (_) {
+      // Jaring pengaman: pastikan spinner selalu berhenti
+      emit(const ProfileError('Gagal upload foto. Coba lagi.'));
+    }
   }
 }

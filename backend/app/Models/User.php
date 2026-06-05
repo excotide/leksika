@@ -10,6 +10,18 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * @property int         $id
+ * @property string      $name
+ * @property string      $email
+ * @property string|null $bio
+ * @property string|null $institution
+ * @property string|null $address
+ * @property string|null $avatar_path
+ * @property string|null $email_verified_at
+ * @property string|null $password
+ * @property string|null $remember_token
+ */
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */

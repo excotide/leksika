@@ -59,6 +59,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
       return Left(EmailNotVerifiedFailure());
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure('Gagal upload foto. Coba lagi.'));
     }
   }
 }
