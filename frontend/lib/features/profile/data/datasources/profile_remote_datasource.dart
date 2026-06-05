@@ -81,13 +81,24 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     final statusCode = error.response?.statusCode ?? 0;
     if (statusCode == 401) throw UnauthorizedException();
     if (statusCode == 403) throw EmailNotVerifiedException();
-    final message =
-        error.response?.data is Map<String, dynamic>
-            ? error.response?.data['message'] as String?
-            : null;
     throw ServerException(
-      message: message ?? 'Terjadi kesalahan',
+      message: _extractMessage(error.response?.data) ?? 'Terjadi kesalahan. Coba lagi.',
       statusCode: statusCode,
     );
+  }
+
+  /// Ambil pesan dari respons error Laravel (string atau MessageBag).
+  String? _extractMessage(dynamic data) {
+    if (data is! Map) return null;
+    final message = data['message'];
+    if (message is String && message.isNotEmpty) return message;
+    final errors = message is Map ? message : data['errors'];
+    if (errors is Map) {
+      for (final value in errors.values) {
+        if (value is List && value.isNotEmpty) return value.first.toString();
+        if (value is String && value.isNotEmpty) return value;
+      }
+    }
+    return null;
   }
 }

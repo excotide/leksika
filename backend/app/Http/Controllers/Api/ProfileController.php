@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Summary;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
@@ -84,17 +85,25 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        if ($user->avatar_path) {
-            Storage::disk('public')->delete($user->avatar_path);
-        }
+        DB::transaction(function () use ($request, $user) {
+            $oldPath = $user->avatar_path;
 
-        $path = $request->file('photo')->store('avatars', 'public');
-        $user->update(['avatar_path' => $path]);
+            // Simpan file baru DULU
+            $path = $request->file('photo')->store('avatars', 'public');
+
+            // Update DB — jika gagal, transaction rollback & file baru tidak jadi orphan
+            $user->update(['avatar_path' => $path]);
+
+            // Hapus file lama SETELAH update DB berhasil
+            if ($oldPath) {
+                Storage::disk('public')->delete($oldPath);
+            }
+        });
 
         return response()->json([
             'status' => true,
             'message' => 'Foto profil berhasil diperbarui.',
-            'data' => $this->formatUser($user),
+            'data' => $this->formatUser($user->fresh()),
         ]);
     }
 }

@@ -36,9 +36,20 @@ class ProfileSubmitting extends ProfileState {
   List<Object?> get props => [profile];
 }
 
-/// Sukses update profil atau upload foto.
+/// Sukses update teks profil (nama/bio/institusi/alamat).
 class ProfileUpdated extends ProfileState {
   const ProfileUpdated(this.profile);
+
+  final ProfileEntity profile;
+
+  @override
+  List<Object?> get props => [profile];
+}
+
+/// Sukses upload foto profil — state terpisah agar listener bisa
+/// membedakan mana yang selesai duluan saat keduanya di-queue.
+class ProfilePhotoUpdated extends ProfileState {
+  const ProfilePhotoUpdated(this.profile);
 
   final ProfileEntity profile;
 

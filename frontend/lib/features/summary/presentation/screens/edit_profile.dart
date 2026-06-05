@@ -69,8 +69,8 @@ class _EditProfileViewState extends State<_EditProfileView> {
       final result = await FilePicker.pickFiles(type: FileType.image);
       final path = result?.files.single.path;
       if (path != null && mounted) {
+        // Hanya simpan path untuk preview — upload dilakukan saat Save ditekan
         setState(() => _pickedImagePath = path);
-        context.read<ProfileBloc>().add(UploadPhoto(path));
       }
     } catch (e) {
       debugPrint('Error picking image: $e');
@@ -79,6 +79,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
 
   void _save() {
     setState(() => _savePressed = true);
+    // Update teks profil selalu di-dispatch pertama
     context.read<ProfileBloc>().add(
           UpdateProfile(
             name: _namaController.text.trim(),
@@ -87,11 +88,16 @@ class _EditProfileViewState extends State<_EditProfileView> {
             address: _lokasiController.text.trim(),
           ),
         );
+    // Jika ada foto baru, queue setelah UpdateProfile (bloc sekuensial)
+    if (_pickedImagePath != null) {
+      context.read<ProfileBloc>().add(UploadPhoto(_pickedImagePath!));
+    }
   }
 
   ProfileEntity? _profileOf(ProfileState state) {
     if (state is ProfileLoaded) return state.profile;
     if (state is ProfileUpdated) return state.profile;
+    if (state is ProfilePhotoUpdated) return state.profile;
     if (state is ProfileSubmitting) return state.profile;
     return null;
   }
@@ -102,19 +108,26 @@ class _EditProfileViewState extends State<_EditProfileView> {
       listener: (context, state) {
         if (state is ProfileLoaded && !_initialized) {
           _populate(state.profile);
-        } else if (state is ProfileUpdated) {
-          if (_savePressed) {
+        } else if (state is ProfileUpdated && _savePressed) {
+          if (_pickedImagePath != null) {
+            // Teks profil tersimpan, masih menunggu upload foto — jangan pop dulu
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Profil tersimpan, mengupload foto...')),
+            );
+          } else {
+            // Tidak ada foto baru — selesai
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Profil berhasil diperbarui')),
             );
             Navigator.pop(context);
-          } else {
-            // Hasil upload foto
-            setState(() => _pickedImagePath = null);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Foto profil berhasil diperbarui')),
-            );
           }
+        } else if (state is ProfilePhotoUpdated) {
+          // Upload foto selesai (langkah terakhir saat Save dengan foto)
+          setState(() => _pickedImagePath = null);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profil & foto berhasil diperbarui')),
+          );
+          Navigator.pop(context);
         } else if (state is ProfileError) {
           setState(() => _savePressed = false);
           ScaffoldMessenger.of(context).showSnackBar(

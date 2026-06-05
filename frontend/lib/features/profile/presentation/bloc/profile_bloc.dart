@@ -68,7 +68,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       (failure) => emit(ProfileError(failure.message)),
       (profile) {
         _lastProfile = profile;
-        emit(ProfileUpdated(profile));
+        emit(ProfilePhotoUpdated(profile));
       },
     );
   }
