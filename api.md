@@ -226,6 +226,100 @@ POST /documents
 
 ---
 
+## Profile (Bearer Token + Email Verified)
+
+### Get Profile
+```
+GET /profile
+```
+**Header:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "Profil berhasil diambil.",
+  "data": {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "bio": "Mahasiswa Teknik Informatika",
+    "institution": "Politeknik Elektronika Negeri Surabaya",
+    "address": "Karanggeneng, Lamongan",
+    "avatar_url": "http://<host>:8000/storage/avatars/abc123.jpg",
+    "total_summary": 10,
+    "total_streak": 7
+  }
+}
+```
+
+> `avatar_url` bernilai `null` jika user belum upload foto profil.
+
+---
+
+### Update Profile
+```
+PUT /profile
+```
+**Header:** `Authorization: Bearer <token>`
+
+**Body:**
+| Field | Type | Rules |
+|---|---|---|
+| `name` | string | optional, max 255 |
+| `bio` | string | optional, max 1000 |
+| `institution` | string | optional, max 255 |
+| `address` | string | optional, max 255 |
+
+> Field `email` tidak dapat diubah lewat endpoint ini.
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "Profil berhasil diperbarui.",
+  "data": {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "bio": "Mahasiswa Teknik Informatika",
+    "institution": "Politeknik Elektronika Negeri Surabaya",
+    "address": "Karanggeneng, Lamongan",
+    "avatar_url": null
+  }
+}
+```
+
+---
+
+### Upload Profile Photo
+```
+POST /profile/photo
+```
+**Header:** `Authorization: Bearer <token>`  
+**Content-Type:** `multipart/form-data`
+
+**Body:**
+| Field | Type | Rules |
+|---|---|---|
+| `photo` | file | required, jpeg/jpg/png, max 5MB |
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "Foto profil berhasil diperbarui.",
+  "data": {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "bio": "Mahasiswa Teknik Informatika",
+    "institution": "Politeknik Elektronika Negeri Surabaya",
+    "address": "Karanggeneng, Lamongan",
+    "avatar_url": "http://<host>:8000/storage/avatars/abc123.jpg"
+  }
+}
+```
+
+---
+
 ## HTTP Status Codes
 
 | Code | Keterangan |

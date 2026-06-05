@@ -1,307 +1,402 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
     <title>Kode Verifikasi — Leksika</title>
     <style>
+        /* Paksa light mode — cegah email client dark mode override warna */
+        :root { color-scheme: light only; }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        body {
-            background-color: #EAE4D6;
+        /* Wrapper luar — background halaman */
+        body,
+        .body-wrapper {
+            background-color: #EAE4D6 !important;
             font-family: Georgia, 'Times New Roman', serif;
-            color: #1A2E2B;
-            padding: 48px 20px;
+            color: #1A2E2B !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
         }
 
+        /* ── OUTER PADDING TABLE ── */
+        .outer-table {
+            width: 100%;
+            background-color: #EAE4D6 !important;
+        }
+
+        /* ── CONTAINER ── */
         .container {
             max-width: 560px;
+            width: 100%;
             margin: 0 auto;
-            background: #FFFFFF;
-            border-radius: 24px;
+            background-color: #FFFFFF !important;
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 20px 60px rgba(30, 63, 57, 0.12);
         }
 
         /* ── HEADER ── */
         .header {
-            background: #1E3F39;
-            padding: 48px 40px;
+            background-color: #1E3F39 !important;
+            padding: 44px 40px;
             text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -60px; right: -60px;
-            width: 200px; height: 200px;
-            border-radius: 50%;
-            background: rgba(118, 176, 166, 0.1);
-        }
-
-        .header::after {
-            content: '';
-            position: absolute;
-            bottom: -40px; left: -40px;
-            width: 140px; height: 140px;
-            border-radius: 50%;
-            background: rgba(0, 105, 71, 0.15);
         }
 
         .header-logo {
-            font-size: 32px;
+            font-size: 30px;
             font-weight: 900;
             letter-spacing: -1px;
-            color: #FFFFFF;
-            position: relative;
-            z-index: 1;
+            color: #FFFFFF !important;
+            font-family: Georgia, serif;
         }
 
-        .header-logo span { color: #76B0A6; }
+        .header-logo-accent { color: #76B0A6 !important; }
 
         .header-sub {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            font-size: 12px;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
             font-weight: 400;
             letter-spacing: 3px;
             text-transform: uppercase;
-            color: #76B0A6;
+            color: #76B0A6 !important;
             margin-top: 8px;
-            position: relative;
-            z-index: 1;
+            display: block;
         }
 
-        .header-divider {
+        /* Garis aksen di bawah sub-header */
+        .header-line {
             width: 40px;
             height: 2px;
-            background: #006947;
-            margin: 16px auto 0;
+            background-color: #006947 !important;
+            margin: 14px auto 0;
+            display: block;
             border-radius: 2px;
-            position: relative;
-            z-index: 1;
         }
 
         /* ── BODY ── */
-        .body {
-            padding: 44px 40px;
+        .email-body {
+            background-color: #FFFFFF !important;
+            padding: 40px 40px 36px;
         }
 
+        /* Greeting */
         .greeting {
             font-size: 20px;
             font-weight: 700;
-            color: #1E3F39;
+            color: #1E3F39 !important;
+            font-family: Georgia, serif;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        /* Teks penjelasan */
+        .message {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: #3D5F5A !important;
+            line-height: 1.8;
+            margin-bottom: 32px;
+            display: block;
+        }
+
+        /* ── OTP WRAPPER ── */
+        .otp-label {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: #6B8F8A !important;
+            text-align: center;
+            display: block;
             margin-bottom: 14px;
         }
 
-        .message {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            font-size: 14px;
-            color: #3D5F5A;
-            line-height: 1.8;
-            margin-bottom: 36px;
-        }
-
-        /* ── OTP BOX ── */
-        .otp-wrapper {
-            text-align: center;
-            margin-bottom: 36px;
-        }
-
-        .otp-label {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: #6B8F8A;
-            margin-bottom: 16px;
-        }
-
+        /* Kotak OTP — full width supaya rapi di mobile */
         .otp-box {
-            background: #F5F0E8;
-            border: 2px solid #A8D5CE;
-            border-radius: 16px;
-            padding: 28px 40px;
-            display: inline-block;
-            position: relative;
+            background-color: #F5F0E8 !important;
+            border: 2px solid #A8D5CE !important;
+            border-top: 4px solid #006947 !important;
+            border-radius: 14px;
+            padding: 26px 20px;
+            text-align: center;
+            margin-bottom: 32px;
+            display: block;
         }
 
-        .otp-box::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #006947, #76B0A6);
-            border-radius: 16px 16px 0 0;
-        }
-
+        /* Angka OTP besar */
         .otp-code {
-            font-size: 48px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 46px;
             font-weight: 900;
-            letter-spacing: 14px;
-            color: #1E3F39;
-            font-family: 'Courier New', monospace;
-            text-indent: 14px;
+            letter-spacing: 12px;
+            color: #1E3F39 !important;
+            text-indent: 12px;
+            display: block;
         }
 
-        /* ── DIVIDER ── */
+        /* ── GARIS PEMBATAS ── */
         .divider {
             border: none;
-            border-top: 1px solid #EAE4D6;
-            margin: 28px 0;
+            border-top: 1px solid #EAE4D6 !important;
+            margin: 8px 0 28px;
         }
 
-        /* ── INFO CARDS ── */
+        /* ── INFO CARDS — layout baris vertikal ──
+           Setiap card: aksen bar kiri + teks judul + deskripsi.
+           Disusun ke bawah, tidak pernah sejajar ke kanan.
+        ── */
         .info-cards {
-            display: flex;
-            gap: 12px;
             margin-bottom: 28px;
         }
 
-        .info-card {
-            flex: 1;
-            background: #F5F0E8;
-            border-radius: 12px;
-            padding: 16px;
-            text-align: center;
+        /* Wrapper tiap card — pakai table-cell supaya aksen bar
+           bisa setinggi card tanpa CSS height tricks */
+        .info-card-wrap {
+            display: table;
+            width: 100%;
+            margin-bottom: 10px;
+            background-color: #F5F0E8 !important;
+            border-radius: 10px;
+            overflow: hidden;
         }
 
-        .info-card-icon {
-            font-size: 20px;
-            margin-bottom: 6px;
+        /* Kolom aksen warna di kiri — lebar tetap 5px */
+        .info-card-bar {
+            display: table-cell;
+            width: 5px;
+            min-width: 5px;
+            background-color: #006947 !important;
+            border-radius: 10px 0 0 10px;
         }
 
-        .info-card-text {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            font-size: 11px;
-            color: #3D5F5A;
-            line-height: 1.5;
-            font-weight: 500;
+        /* Variasi warna per card */
+        .info-card-bar-teal    { background-color: #76B0A6 !important; }
+        .info-card-bar-dark    { background-color: #1E3F39 !important; }
+
+        /* Kolom konten teks */
+        .info-card-content {
+            display: table-cell;
+            vertical-align: middle;
+            padding: 14px 18px;
         }
 
-        .info-card-text strong {
+        .info-card-title {
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: #1E3F39 !important;
             display: block;
-            color: #1E3F39;
-            font-size: 12px;
             margin-bottom: 2px;
         }
 
-        /* ── EXPIRE NOTE ── */
-        .expire-note {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: rgba(0, 105, 71, 0.06);
-            border-left: 3px solid #006947;
-            border-radius: 0 8px 8px 0;
-            padding: 14px 16px;
+        .info-card-desc {
+            font-family: Arial, sans-serif;
             font-size: 12px;
-            color: #3D5F5A;
-            line-height: 1.7;
+            color: #5A7A75 !important;
+            line-height: 1.5;
+            display: block;
         }
 
-        .expire-note strong { color: #006947; }
+        /* ── CATATAN EXPIRE ── */
+        .expire-note {
+            background-color: rgba(0, 105, 71, 0.06) !important;
+            border-left: 3px solid #006947 !important;
+            border-radius: 0 8px 8px 0;
+            padding: 14px 16px;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            color: #3D5F5A !important;
+            line-height: 1.7;
+            display: block;
+        }
+
+        .expire-email {
+            color: #006947 !important;
+            font-weight: 700;
+        }
 
         /* ── FOOTER ── */
         .footer {
-            background: #1E3F39;
-            padding: 28px 40px;
+            background-color: #1E3F39 !important;
+            padding: 26px 40px;
             text-align: center;
         }
 
         .footer-logo {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
-            color: #FFFFFF;
-            letter-spacing: -0.5px;
+            color: #FFFFFF !important;
+            font-family: Georgia, serif;
+            display: block;
             margin-bottom: 10px;
         }
 
-        .footer-logo span { color: #76B0A6; }
+        .footer-logo-accent { color: #76B0A6 !important; }
 
-        .footer p {
-            font-family: 'Segoe UI', Arial, sans-serif;
+        .footer-line {
+            width: 30px;
+            height: 1px;
+            background-color: rgba(118, 176, 166, 0.35) !important;
+            margin: 0 auto 12px;
+            display: block;
+        }
+
+        .footer-text {
+            font-family: Arial, sans-serif;
             font-size: 11px;
-            color: #76B0A6;
+            color: #76B0A6 !important;
             line-height: 1.7;
         }
 
-        .footer-divider {
-            width: 30px;
-            height: 1px;
-            background: rgba(118, 176, 166, 0.3);
-            margin: 12px auto;
+        /* ══════════════════════════════════
+           RESPONSIVE MOBILE (≤ 600px)
+        ══════════════════════════════════ */
+        @media only screen and (max-width: 600px) {
+
+            /* Padding luar lebih tipis di mobile */
+            .email-body { padding: 32px 24px 28px !important; }
+            .header     { padding: 36px 24px !important; }
+            .footer     { padding: 22px 24px !important; }
+
+            .header-logo  { font-size: 26px !important; }
+            .greeting     { font-size: 18px !important; }
+
+            /* OTP kecil supaya tidak keluar layar */
+            .otp-code {
+                font-size: 36px !important;
+                letter-spacing: 8px !important;
+                text-indent: 8px !important;
+            }
+        }
+
+        /* HP sangat kecil ≤ 380px */
+        @media only screen and (max-width: 380px) {
+            .otp-code {
+                font-size: 30px !important;
+                letter-spacing: 6px !important;
+                text-indent: 6px !important;
+            }
         }
     </style>
 </head>
-<body>
-    <div class="container">
 
-        {{-- ── HEADER ── --}}
-        <div class="header">
-            <div class="header-logo">Leksi<span>ka</span></div>
-            <div class="header-sub">Verifikasi Email</div>
-            <div class="header-divider"></div>
-        </div>
+<!--
+    Catatan: gunakan meta color-scheme "light only" supaya
+    email client tidak membalik warna ke dark mode secara paksa.
+-->
+<body style="margin:0;padding:0;background-color:#EAE4D6;">
 
-        {{-- ── BODY ── --}}
-        <div class="body">
-            <p class="greeting">Halo, {{ $userName }}! 👋</p>
-            <p class="message">
-                Terima kasih sudah mendaftar di Leksika. Gunakan kode OTP berikut
-                untuk memverifikasi alamat email kamu dan mulai perjalanan belajarmu.
-            </p>
+    {{-- Outer table: full-width background halaman --}}
+    <table class="outer-table" role="presentation" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+            <td align="center" style="padding:40px 16px;background-color:#EAE4D6;">
 
-            <div class="otp-wrapper">
-                <div class="otp-label">Kode Verifikasi</div>
-                <div class="otp-box">
-                    <div class="otp-code">{{ $otp }}</div>
-                </div>
-            </div>
+                {{-- Container utama email --}}
+                <table class="container" role="presentation" cellpadding="0" cellspacing="0" width="560">
+                    <tr>
+                        <td>
 
-            <div class="info-cards">
-                <div class="info-card">
-                    <div class="info-card-icon">⏱</div>
-                    <div class="info-card-text">
-                        <strong>10 Menit</strong>
-                        Masa berlaku kode
-                    </div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-icon">🔒</div>
-                    <div class="info-card-text">
-                        <strong>Rahasia</strong>
-                        Jangan bagikan ke siapapun
-                    </div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-icon">1️⃣</div>
-                    <div class="info-card-text">
-                        <strong>Sekali Pakai</strong>
-                        Kode hanya berlaku 1x
-                    </div>
-                </div>
-            </div>
+                            {{-- ── HEADER ── --}}
+                            <div class="header">
+                                <span class="header-logo">
+                                    Leksi<span class="header-logo-accent">ka</span>
+                                </span>
+                                <span class="header-sub">Verifikasi Email</span>
+                                <span class="header-line"></span>
+                            </div>
 
-            <hr class="divider">
+                            {{-- ── BODY ── --}}
+                            <div class="email-body">
 
-            <div class="expire-note">
-                Jika kamu tidak merasa mendaftar di Leksika, abaikan email ini.
-                Akun tidak akan dibuat tanpa verifikasi. Butuh bantuan?
-                Hubungi <strong>support@leksika.id</strong>
-            </div>
-        </div>
+                                {{-- Sapaan --}}
+                                <span class="greeting">Halo, {{ $userName }}!</span>
 
-        {{-- ── FOOTER ── --}}
-        <div class="footer">
-            <div class="footer-logo">Leksi<span>ka</span></div>
-            <div class="footer-divider"></div>
-            <p>
-                © {{ date('Y') }} Leksika. All rights reserved.<br>
-                Email ini dikirim otomatis — mohon tidak membalas.
-            </p>
-        </div>
+                                {{-- Penjelasan singkat --}}
+                                <span class="message">
+                                    Terima kasih sudah mendaftar di Leksika. Gunakan kode OTP berikut
+                                    untuk memverifikasi alamat email kamu dan mulai perjalanan belajarmu.
+                                </span>
 
-    </div>
+                                {{-- Label & kotak OTP --}}
+                                <span class="otp-label">Kode Verifikasi</span>
+                                <div class="otp-box">
+                                    <span class="otp-code">{{ $otp }}</span>
+                                </div>
+
+                                {{-- ── INFO CARDS — 3 baris vertikal ──
+                                     Struktur: table → 2 kolom (bar warna | konten teks)
+                                     Pakai display:table agar bar setinggi card di semua client
+                                ── --}}
+                                <div class="info-cards">
+
+                                    {{-- Card 1: durasi berlaku --}}
+                                    <div class="info-card-wrap">
+                                        <div class="info-card-bar"></div>
+                                        <div class="info-card-content">
+                                            <span class="info-card-title">Berlaku 10 Menit</span>
+                                            <span class="info-card-desc">Kode akan kedaluwarsa 10 menit setelah email ini dikirim.</span>
+                                        </div>
+                                    </div>
+
+                                    {{-- Card 2: kerahasiaan --}}
+                                    <div class="info-card-wrap">
+                                        <div class="info-card-bar info-card-bar-teal"></div>
+                                        <div class="info-card-content">
+                                            <span class="info-card-title">Jaga Kerahasiaannya</span>
+                                            <span class="info-card-desc">Jangan bagikan kode ini kepada siapapun, termasuk tim Leksika.</span>
+                                        </div>
+                                    </div>
+
+                                    {{-- Card 3: sekali pakai --}}
+                                    <div class="info-card-wrap">
+                                        <div class="info-card-bar info-card-bar-dark"></div>
+                                        <div class="info-card-content">
+                                            <span class="info-card-title">Hanya Sekali Pakai</span>
+                                            <span class="info-card-desc">Kode otomatis tidak berlaku setelah digunakan satu kali.</span>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <hr class="divider">
+
+                                {{-- Catatan jika bukan pengirim --}}
+                                <div class="expire-note">
+                                    Jika kamu tidak merasa mendaftar di Leksika, abaikan email ini.
+                                    Akun tidak akan dibuat tanpa verifikasi. Butuh bantuan?
+                                    Hubungi <span class="expire-email">support@leksika.id</span>
+                                </div>
+
+                            </div>
+                            {{-- end email-body --}}
+
+                            {{-- ── FOOTER ── --}}
+                            <div class="footer">
+                                <span class="footer-logo">
+                                    Leksi<span class="footer-logo-accent">ka</span>
+                                </span>
+                                <span class="footer-line"></span>
+                                <p class="footer-text">
+                                    &copy; {{ date('Y') }} Leksika. All rights reserved.<br>
+                                    Email ini dikirim otomatis &mdash; mohon tidak membalas.
+                                </p>
+                            </div>
+
+                        </td>
+                    </tr>
+                </table>
+                {{-- end container --}}
+
+            </td>
+        </tr>
+    </table>
+
 </body>
 </html>

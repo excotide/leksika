@@ -1,29 +1,53 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:leksika/core/di/injection_container.dart';
+import 'package:leksika/features/profile/domain/entities/profile_entity.dart';
+import 'package:leksika/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:leksika/features/profile/presentation/bloc/profile_event.dart';
+import 'package:leksika/features/profile/presentation/bloc/profile_state.dart';
 
 // ============================================================
 // PRESENTATION LAYER — Clean Architecture
-// File: lib/features/profile/presentation/pages/edit_profile_page.dart
+// File: lib/features/summary/presentation/screens/edit_profile.dart
 // ============================================================
 
-class EditProfilePage extends StatefulWidget {
+class EditProfilePage extends StatelessWidget {
   const EditProfilePage({super.key});
 
   @override
-  State<EditProfilePage> createState() => _EditProfilePageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => sl<ProfileBloc>()..add(const LoadProfile()),
+      child: const _EditProfileView(),
+    );
+  }
 }
 
-class _EditProfilePageState extends State<EditProfilePage> {
-  // Controller untuk setiap field input — dipakai kalau nanti
-  // dihubungkan ke BLoC/Cubit untuk submit data.
-  final _namaController = TextEditingController(text: 'Juli Ayu');
-  final _bioController = TextEditingController(text: 'Mahasiswa Teknik Informatika');
-  final _emailController = TextEditingController(text: 'julijulay@gmail.com');
-  final _institusiController = TextEditingController(text: 'Politeknik Elektronika Negeri Surabaya');
-  final _lokasiController = TextEditingController(text: 'Karanggeneng, Lamongan');
+class _EditProfileView extends StatefulWidget {
+  const _EditProfileView();
+
+  @override
+  State<_EditProfileView> createState() => _EditProfileViewState();
+}
+
+class _EditProfileViewState extends State<_EditProfileView> {
+  // Controller untuk setiap field input.
+  final _namaController = TextEditingController();
+  final _bioController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _institusiController = TextEditingController();
+  final _lokasiController = TextEditingController();
+
+  bool _initialized = false;
+  bool _savePressed = false;
+  bool _textSaved = false;
+  String? _pickedImagePath;
 
   @override
   void dispose() {
-    // Selalu dispose controller supaya tidak ada memory leak.
     _namaController.dispose();
     _bioController.dispose();
     _emailController.dispose();
@@ -32,111 +56,247 @@ class _EditProfilePageState extends State<EditProfilePage> {
     super.dispose();
   }
 
+  void _populate(ProfileEntity p) {
+    _namaController.text = p.name;
+    _bioController.text = p.bio ?? '';
+    _emailController.text = p.email;
+    _institusiController.text = p.institution ?? '';
+    _lokasiController.text = p.address ?? '';
+    _initialized = true;
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final result = await FilePicker.pickFiles(type: FileType.image);
+      final path = result?.files.single.path;
+      if (path != null && mounted) {
+        // Hanya simpan path untuk preview — upload dilakukan saat Save ditekan
+        setState(() => _pickedImagePath = path);
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+    }
+  }
+
+  void _save() {
+    setState(() => _savePressed = true);
+    // Update teks profil selalu di-dispatch pertama
+    context.read<ProfileBloc>().add(
+          UpdateProfile(
+            name: _namaController.text.trim(),
+            bio: _bioController.text.trim(),
+            institution: _institusiController.text.trim(),
+            address: _lokasiController.text.trim(),
+          ),
+        );
+    // Jika ada foto baru, queue setelah UpdateProfile (bloc sekuensial)
+    if (_pickedImagePath != null) {
+      context.read<ProfileBloc>().add(UploadPhoto(_pickedImagePath!));
+    }
+  }
+
+  ProfileEntity? _profileOf(ProfileState state) {
+    if (state is ProfileLoaded) return state.profile;
+    if (state is ProfileUpdated) return state.profile;
+    if (state is ProfilePhotoUpdated) return state.profile;
+    if (state is ProfileSubmitting) return state.profile;
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // Background hijau mint sesuai foto
-      backgroundColor: const Color(0xFFE3F2E7),
+    return BlocConsumer<ProfileBloc, ProfileState>(
+      listener: (context, state) {
+        if (state is ProfileLoaded && !_initialized) {
+          _populate(state.profile);
+        } else if (state is ProfileUpdated && _savePressed) {
+          if (_pickedImagePath != null) {
+            // Teks profil tersimpan, masih menunggu upload foto — tandai & tunggu
+            setState(() => _textSaved = true);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Profil tersimpan, mengupload foto...')),
+            );
+          } else {
+            // Tidak ada foto baru — selesai
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Profil berhasil diperbarui')),
+            );
+            Navigator.pop(context);
+          }
+        } else if (state is ProfilePhotoUpdated) {
+          // Upload foto selesai (langkah terakhir)
+          setState(() {
+            _pickedImagePath = null;
+            _textSaved = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profil & foto berhasil diperbarui')),
+          );
+          Navigator.pop(context);
+        } else if (state is ProfileError) {
+          setState(() => _savePressed = false);
+          if (_textSaved) {
+            // Teks profil sudah tersimpan, hanya foto yang gagal — tetap pop
+            setState(() {
+              _textSaved = false;
+              _pickedImagePath = null;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Profil tersimpan. Foto gagal diupload, coba lagi nanti.'),
+                duration: Duration(seconds: 4),
+              ),
+            );
+            Navigator.pop(context);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+        }
+      },
+      builder: (context, state) {
+        final isLoadingInitial =
+            (state is ProfileLoading || state is ProfileInitial) &&
+                !_initialized;
+        final isSubmitting = state is ProfileSubmitting;
+        final profile = _profileOf(state);
+        final avatarUrl = profile?.avatarUrl;
 
-      // ── AppBar ────────────────────────────────────────────────
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF004C31),
-        elevation: 0,
-        leading: const BackButton(color: Colors.white),
-        title: const Text(
-          'Setelan',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+        return Scaffold(
+          // Background hijau mint sesuai foto
+          backgroundColor: const Color(0xFFE3F2E7),
+
+          // ── AppBar ────────────────────────────────────────────────
+          appBar: AppBar(
+            backgroundColor: const Color(0xFF004C31),
+            elevation: 0,
+            leading: const BackButton(color: Colors.white),
+            title: const Text(
+              'Setelan',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-        ),
-      ),
 
-      // ── Body ──────────────────────────────────────────────────
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.only(
-          top: 32,
-          left: 20,
-          right: 20,
-          bottom: 32,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Avatar dengan tombol kamera di sudut kanan bawah
-            const _AvatarPicker(),
+          // ── Body ──────────────────────────────────────────────────
+          body: isLoadingInitial
+              ? const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF004C31)),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.only(
+                    top: 32,
+                    left: 20,
+                    right: 20,
+                    bottom: 32,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 1. Avatar dengan tombol kamera di sudut kanan bawah
+                      _AvatarPicker(
+                        localImagePath: _pickedImagePath,
+                        avatarUrl: avatarUrl,
+                        uploading: isSubmitting && _pickedImagePath != null,
+                        onTap: _pickImage,
+                      ),
 
-            const SizedBox(height: 32),
+                      const SizedBox(height: 32),
 
-            // 2. Form fields — setiap field pakai _FormField widget
-            _FormField(
-              label: 'NAMA LENGKAP',
-              controller: _namaController,
-              prefixIcon: Icons.person_outline,
-            ),
+                      // 2. Form fields
+                      _FormField(
+                        label: 'NAMA LENGKAP',
+                        controller: _namaController,
+                        prefixIcon: Icons.person_outline,
+                      ),
 
-            const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-            _FormField(
-              label: 'BIO',
-              controller: _bioController,
-              prefixIcon: Icons.info_outline,
-              minLines: 1,
-              maxLines: 4,
-            ),
+                      _FormField(
+                        label: 'BIO',
+                        controller: _bioController,
+                        prefixIcon: Icons.info_outline,
+                        minLines: 1,
+                        maxLines: 4,
+                      ),
 
-            const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-            _FormField(
-              label: 'EMAIL',
-              controller: _emailController,
-              prefixIcon: Icons.email_outlined,
-              // Email field punya ikon kunci di kanan (readonly feel)
-              suffixIcon: Icons.lock_outline,
-              readOnly: true,
-            ),
+                      _FormField(
+                        label: 'EMAIL',
+                        controller: _emailController,
+                        prefixIcon: Icons.email_outlined,
+                        // Email field punya ikon kunci di kanan (readonly feel)
+                        suffixIcon: Icons.lock_outline,
+                        readOnly: true,
+                      ),
 
-            const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-            _FormField(
-              label: 'INSTITUSI',
-              controller: _institusiController,
-              prefixIcon: Icons.school_outlined,
-            ),
+                      _FormField(
+                        label: 'INSTITUSI',
+                        controller: _institusiController,
+                        prefixIcon: Icons.school_outlined,
+                      ),
 
-            const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-            _FormField(
-              label: 'LOKASI',
-              controller: _lokasiController,
-              prefixIcon: Icons.location_on_outlined,
-            ),
+                      _FormField(
+                        label: 'LOKASI',
+                        controller: _lokasiController,
+                        prefixIcon: Icons.location_on_outlined,
+                      ),
 
-            const SizedBox(height: 32),
+                      const SizedBox(height: 32),
 
-            // 3. Tombol Simpan Perubahan
-            _SaveButton(
-              onPressed: () {           
-              },
-            ),
-          ],
-        ),
-      ),
+                      // 3. Tombol Simpan Perubahan
+                      _SaveButton(
+                        loading: isSubmitting,
+                        onPressed: isSubmitting ? null : _save,
+                      ),
+                    ],
+                  ),
+                ),
+        );
+      },
     );
   }
 }
 
 // ============================================================
 // WIDGET — _AvatarPicker
-// Avatar bulat abu-abu dengan badge kamera hijau tua di sudut
-// kanan bawah, persis seperti di foto.
+// Avatar bulat dengan badge kamera hijau tua di sudut kanan bawah.
+// Menampilkan foto lokal yang baru dipilih, foto dari server, atau
+// placeholder. Saat upload berlangsung tampil indikator loading.
 // ============================================================
 class _AvatarPicker extends StatelessWidget {
-  const _AvatarPicker();
+  const _AvatarPicker({
+    required this.onTap,
+    this.localImagePath,
+    this.avatarUrl,
+    this.uploading = false,
+  });
+
+  final VoidCallback onTap;
+  final String? localImagePath;
+  final String? avatarUrl;
+  final bool uploading;
+
+  ImageProvider? get _image {
+    if (localImagePath != null) return FileImage(File(localImagePath!));
+    if (avatarUrl != null && avatarUrl!.isNotEmpty) {
+      return NetworkImage(avatarUrl!);
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final image = _image;
     return Center(
       child: Stack(
         clipBehavior: Clip.none,
@@ -147,6 +307,9 @@ class _AvatarPicker extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: const Color(0xFFD7E6DC),
+              image: image != null
+                  ? DecorationImage(image: image, fit: BoxFit.cover)
+                  : null,
               border: Border.all(
                 color: Colors.white,
                 width: 4,
@@ -160,20 +323,27 @@ class _AvatarPicker extends StatelessWidget {
               ],
             ),
             // Placeholder ikon orang kalau belum ada foto
-            child: const Icon(
-              Icons.person,
-              size: 52,
-              color: Color(0xFF9DBBA9),
-            ),
+            child: uploading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF004C31),
+                      strokeWidth: 2.5,
+                    ),
+                  )
+                : image == null
+                    ? const Icon(
+                        Icons.person,
+                        size: 52,
+                        color: Color(0xFF9DBBA9),
+                      )
+                    : null,
           ),
-    
+
           Positioned(
             bottom: 4,
             right: 0,
             child: GestureDetector(
-              onTap: () {
-                
-              },
+              onTap: onTap,
               child: Container(
                 width: 32,
                 height: 32,
@@ -198,12 +368,8 @@ class _AvatarPicker extends StatelessWidget {
 
 // ============================================================
 // WIDGET — _FormField
-// Field input reusable dengan:
-//   - Label kecil hijau tua di atas (NAMA LENGKAP, BIO, dst)
-//   - Container putih dengan border hijau transparan + shadow
-//   - Prefix icon di kiri
-//   - Suffix icon opsional di kanan (untuk email yang locked)
-//   - Support readOnly dan multiline
+// Field input reusable dengan label, container putih, prefix icon,
+// suffix icon opsional, support readOnly dan multiline.
 // ============================================================
 class _FormField extends StatelessWidget {
   final String label;
@@ -305,12 +471,12 @@ class _FormField extends StatelessWidget {
 // ============================================================
 // WIDGET — _SaveButton
 // Tombol full-width hijau tua dengan ikon dan label "Simpan Perubahan".
-// Shadow hijau transparan sesuai foto.
 // ============================================================
 class _SaveButton extends StatelessWidget {
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
+  final bool loading;
 
-  const _SaveButton({required this.onPressed});
+  const _SaveButton({required this.onPressed, this.loading = false});
 
   @override
   Widget build(BuildContext context) {
@@ -338,21 +504,30 @@ class _SaveButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
           ),
         ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.save_outlined, size: 20, color: Colors.white),
-            SizedBox(width: 10),
-            Text(
-              'Simpan Perubahan',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+        child: loading
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.save_outlined, size: 20, color: Colors.white),
+                  SizedBox(width: 10),
+                  Text(
+                    'Simpan Perubahan',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }

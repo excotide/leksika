@@ -98,9 +98,31 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     final statusCode = error.response?.statusCode ?? 0;
     if (statusCode == 401) throw UnauthorizedException();
     if (statusCode == 403) throw EmailNotVerifiedException();
-    final message =
-        error.response?.data['message'] as String? ?? 'Terjadi kesalahan';
-    throw ServerException(message: message, statusCode: statusCode);
+    throw ServerException(
+      message: _extractMessage(error.response?.data) ??
+          'Terjadi kesalahan. Coba lagi.',
+      statusCode: statusCode,
+    );
+  }
+
+  /// Ambil pesan yang manusiawi dari respons error Laravel.
+  /// Menangani dua format:
+  ///   - {"message": "teks error"}                      (validasi default)
+  ///   - {"message": {"email": ["..."]}} / {"errors": {...}}  (MessageBag)
+  String? _extractMessage(dynamic data) {
+    if (data is! Map) return null;
+
+    final message = data['message'];
+    if (message is String && message.isNotEmpty) return message;
+
+    final errors = message is Map ? message : data['errors'];
+    if (errors is Map) {
+      for (final value in errors.values) {
+        if (value is List && value.isNotEmpty) return value.first.toString();
+        if (value is String && value.isNotEmpty) return value;
+      }
+    }
+    return null;
   }
 
   @override

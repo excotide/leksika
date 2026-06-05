@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\ProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +32,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    Route::get('/profile', [ProfileController::class, 'show']);
+
+    Route::put('/profile', [ProfileController::class, 'update']);
+
+    Route::post('/profile/photo', [ProfileController::class, 'uploadPhoto']);
 
     Route::get('/notifications', [NotificationController::class, 'index']);
 
