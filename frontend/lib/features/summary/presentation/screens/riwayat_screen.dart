@@ -170,6 +170,9 @@ class RiwayatScreenState extends State<RiwayatScreen> {
     final desc = doc.summary;
     final time = _formatDate(doc.createdAt);
 
+    // Membersihkan teks dari sintaks markdown khusus untuk pratinjau teks di kartu
+    final cleanDesc = _stripMarkdown(desc);
+
     return GestureDetector(
       onTap: () {
         Navigator.pushNamed(
@@ -227,7 +230,7 @@ class RiwayatScreenState extends State<RiwayatScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              desc,
+              cleanDesc,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
@@ -260,5 +263,15 @@ class RiwayatScreenState extends State<RiwayatScreen> {
   String _formatDate(DateTime? date) {
     if (date == null) return 'Baru saja';
     return '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
+  }
+
+  // Fungsi helper untuk menghapus sintaks markdown mentah (#, *, _)
+  String _stripMarkdown(String text) {
+    // Menghapus tanda header markdown (contoh: ### )
+    String clean = text.replaceAll(RegExp(r'#+\s*'), '');
+    // Menghapus tanda bold/italic markdown (contoh: ** atau *)
+    clean = clean.replaceAll(RegExp(r'\*+|_+' ), '');
+    // Menghapus spasi berlebih di awal/akhir baris baru
+    return clean.trim();
   }
 }

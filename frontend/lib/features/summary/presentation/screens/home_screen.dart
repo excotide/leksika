@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:leksika/features/auth/presentation/bloc/auth_event.dart'; 
+import 'package:leksika/features/auth/presentation/bloc/auth_event.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_state.dart';
 import 'package:leksika/features/summary/domain/entities/document_entity.dart';
 import 'package:leksika/features/summary/presentation/bloc/summary_bloc.dart';
@@ -19,18 +19,24 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> {
-  
   // Logika Menghitung Streak Harian berturut-turut
   int _calculateDailyStreak(List<DocumentEntity> documents) {
     if (documents.isEmpty) return 0;
 
     // Ambil semua tanggal unik saat user merangkum (hanya tanggal, tanpa jam)
-    final dates = documents
-        .where((doc) => doc.createdAt != null)
-        .map((doc) => DateTime(doc.createdAt!.year, doc.createdAt!.month, doc.createdAt!.day))
-        .toSet()
-        .toList()
-      ..sort((a, b) => b.compareTo(a)); // Urutkan dari yang terbaru
+    final dates =
+        documents
+            .where((doc) => doc.createdAt != null)
+            .map(
+              (doc) => DateTime(
+                doc.createdAt!.year,
+                doc.createdAt!.month,
+                doc.createdAt!.day,
+              ),
+            )
+            .toSet()
+            .toList()
+          ..sort((a, b) => b.compareTo(a)); // Urutkan dari yang terbaru
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -105,13 +111,14 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           ),
           Row(
-  children: [
-    GestureDetector(                                    // ← TAMBAH INI
-      onTap: () => Navigator.pushNamed(context, '/notifikasi'),
-      child: _buildTopIcon(Icons.notifications_none_outlined),
-    ),
-    const SizedBox(width: 10),
-    GestureDetector(
+            children: [
+              GestureDetector(
+                // ← TAMBAH INI
+                onTap: () => Navigator.pushNamed(context, '/notifikasi'),
+                child: _buildTopIcon(Icons.notifications_none_outlined),
+              ),
+              const SizedBox(width: 10),
+              GestureDetector(
                 onTap: () => _showLogoutConfirmation(context),
                 child: _buildTopIcon(
                   Icons.logout_rounded,
@@ -126,7 +133,11 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTopIcon(IconData icon, {Color bgColor = Colors.white, Color iconColor = const Color(0xFF006947)}) {
+  Widget _buildTopIcon(
+    IconData icon, {
+    Color bgColor = Colors.white,
+    Color iconColor = const Color(0xFF006947),
+  }) {
     return Container(
       width: 40,
       height: 40,
@@ -152,11 +163,18 @@ class HomeScreenState extends State<HomeScreen> {
         title: const Text('Logout'),
         content: const Text('Apakah Anda yakin ingin keluar?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
           TextButton(
             onPressed: () {
               context.read<AuthBloc>().add(const LogoutRequested());
-              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/login',
+                (route) => false,
+              );
             },
             child: const Text('Logout', style: TextStyle(color: Colors.red)),
           ),
@@ -174,7 +192,8 @@ class HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(22),
         gradient: const LinearGradient(
           colors: [Color(0xFF006947), Color(0xFF00A86B)],
-          begin: Alignment.topLeft, end: Alignment.bottomRight,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
       ),
       child: Column(
@@ -182,7 +201,12 @@ class HomeScreenState extends State<HomeScreen> {
         children: [
           const Text(
             'SELAMAT DATANG KEMBALI,',
-            style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.8),
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.8,
+            ),
           ),
           const SizedBox(height: 2),
           BlocBuilder<AuthBloc, AuthState>(
@@ -191,7 +215,12 @@ class HomeScreenState extends State<HomeScreen> {
               if (state is Authenticated) name = state.user.name;
               return Text(
                 name.toUpperCase(),
-                style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold, height: 1.2),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  height: 1.2,
+                ),
               );
             },
           ),
@@ -210,13 +239,19 @@ class HomeScreenState extends State<HomeScreen> {
 
         if (state is SummaryListLoaded) {
           dayStreak = _calculateDailyStreak(state.documents);
-          
+
           // Cek apakah hari ini sudah ada aktivitas
           final now = DateTime.now();
           final today = DateTime(now.year, now.month, now.day);
-          isAlreadyActiveToday = state.documents.any((doc) => 
-            doc.createdAt != null && 
-            DateTime(doc.createdAt!.year, doc.createdAt!.month, doc.createdAt!.day) == today
+          isAlreadyActiveToday = state.documents.any(
+            (doc) =>
+                doc.createdAt != null &&
+                DateTime(
+                      doc.createdAt!.year,
+                      doc.createdAt!.month,
+                      doc.createdAt!.day,
+                    ) ==
+                    today,
           );
         }
 
@@ -230,22 +265,42 @@ class HomeScreenState extends State<HomeScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 36, height: 36,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   // Berwarna orange menyala jika user sudah aktif hari ini
-                  color: isAlreadyActiveToday ? const Color(0xFFF5A623) : Colors.grey.shade400,
+                  color: isAlreadyActiveToday
+                      ? const Color(0xFFF5A623)
+                      : Colors.grey.shade400,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.local_fire_department, color: Colors.white, size: 20),
+                child: const Icon(
+                  Icons.local_fire_department,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('STREAK HARIAN', style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'STREAK HARIAN',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   Text(
-                    dayStreak > 0 ? '$dayStreak Hari Berturut-turut!' : 'Mulai streak harimu!',
-                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                    dayStreak > 0
+                        ? '$dayStreak Hari Berturut-turut!'
+                        : 'Mulai streak harimu!',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -259,11 +314,27 @@ class HomeScreenState extends State<HomeScreen> {
   Widget _buildHistorySection() {
     return BlocBuilder<SummaryBloc, SummaryState>(
       builder: (context, state) {
-        if (state is SummaryLoading) return const LoadingWidget(message: 'Memuat data...');
-        if (state is SummaryFailure) return ErrorView(message: state.message, onRetry: () => context.read<SummaryBloc>().add(const FetchDocumentsRequested()));
+        if (state is SummaryLoading)
+          return const LoadingWidget(message: 'Memuat data...');
+        if (state is SummaryFailure)
+          return ErrorView(
+            message: state.message,
+            onRetry: () => context.read<SummaryBloc>().add(
+              const FetchDocumentsRequested(),
+            ),
+          );
         if (state is SummaryListLoaded) {
-          if (state.documents.isEmpty) return const Padding(padding: EdgeInsets.all(20), child: Text('Belum ada riwayat rangkuman.'));
-          return Column(children: state.documents.take(2).map((doc) => _buildHistoryCardFromDocument(doc)).toList());
+          if (state.documents.isEmpty)
+            return const Padding(
+              padding: EdgeInsets.all(20),
+              child: Text('Belum ada riwayat rangkuman.'),
+            );
+          return Column(
+            children: state.documents
+                .take(2)
+                .map((doc) => _buildHistoryCardFromDocument(doc))
+                .toList(),
+          );
         }
         return const SizedBox.shrink();
       },
@@ -276,10 +347,24 @@ class HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('Riwayat Rangkuman', style: TextStyle(color: Color(0xFF003D2A), fontSize: 19, fontWeight: FontWeight.bold)),
+          const Text(
+            'Riwayat Rangkuman',
+            style: TextStyle(
+              color: Color(0xFF003D2A),
+              fontSize: 19,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           TextButton(
             onPressed: () => Navigator.pushNamed(context, '/riwayat'),
-            child: const Text('Lihat semua →', style: TextStyle(color: Color(0xFF006947), fontSize: 13, fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Lihat semua →',
+              style: TextStyle(
+                color: Color(0xFF006947),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -287,18 +372,35 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHistoryCardFromDocument(DocumentEntity doc) {
+    // Membaca teks asli markdown dari database
+    final rawSummary = doc.summary;
+
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, '/detail', arguments: {
-        'title': doc.title.isEmpty ? 'Untitled' : doc.title,
-        'pageCount': 'Ringkasan',
-        'contents': [{'subTitle': 'Ringkasan', 'body': doc.summary}],
-      }),
+      onTap: () => Navigator.pushNamed(
+        context,
+        '/detail',
+        arguments: {
+          'title': doc.title.isEmpty ? 'Untitled' : doc.title,
+          'pageCount': 'Ringkasan',
+          // Mengirim teks dengan format asli (berbintang/pagar) ke halaman detail agar bisa di-render sempurna
+          'contents': [
+            {'subTitle': 'Ringkasan', 'body': rawSummary},
+          ],
+        },
+      ),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4))],
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,14 +413,31 @@ class HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            Text(doc.title.isEmpty ? 'Untitled' : doc.title, style: const TextStyle(color: Color(0xFF003D2A), fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              doc.title.isEmpty ? 'Untitled' : doc.title,
+              style: const TextStyle(
+                color: Color(0xFF003D2A),
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 6),
-            Text(doc.summary, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF2F6555), fontSize: 13)),
+            Text(
+              _stripMarkdown(
+                rawSummary,
+              ), // ← MENGGUNAKAN HELPER PEMBERSIH MARKDOWN DI SINI
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Color(0xFF2F6555), fontSize: 13),
+            ),
             const Divider(height: 24, color: Color(0xFFDDEDE8)),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildFooterInfo(Icons.access_time_rounded, _formatDate(doc.createdAt)),
+                _buildFooterInfo(
+                  Icons.access_time_rounded,
+                  _formatDate(doc.createdAt),
+                ),
                 _buildFooterInfo(Icons.description_outlined, 'Ringkasan'),
               ],
             ),
@@ -328,29 +447,101 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildIconBadge(IconData icon) => Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: const Color(0xFFDFF5EC), borderRadius: BorderRadius.circular(10)), child: Icon(icon, size: 18, color: const Color(0xFF006947)));
-  Widget _buildCategoryBadge(String label) => Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5), decoration: BoxDecoration(color: const Color(0xFF6AEFB8), borderRadius: BorderRadius.circular(20)), child: Text(label, style: const TextStyle(color: Color(0xFF004D33), fontSize: 10, fontWeight: FontWeight.bold)));
-  Widget _buildFooterInfo(IconData icon, String text) => Row(children: [Icon(icon, size: 13, color: const Color(0xFF2F6555)), const SizedBox(width: 4), Text(text, style: const TextStyle(color: Color(0xFF2F6555), fontSize: 12))]);
+  Widget _buildIconBadge(IconData icon) => Container(
+    padding: const EdgeInsets.all(8),
+    decoration: BoxDecoration(
+      color: const Color(0xFFDFF5EC),
+      borderRadius: BorderRadius.circular(10),
+    ),
+    child: Icon(icon, size: 18, color: const Color(0xFF006947)),
+  );
+  Widget _buildCategoryBadge(String label) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+    decoration: BoxDecoration(
+      color: const Color(0xFF6AEFB8),
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Text(
+      label,
+      style: const TextStyle(
+        color: Color(0xFF004D33),
+        fontSize: 10,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+  );
+  Widget _buildFooterInfo(IconData icon, String text) => Row(
+    children: [
+      Icon(icon, size: 13, color: const Color(0xFF2F6555)),
+      const SizedBox(width: 4),
+      Text(
+        text,
+        style: const TextStyle(color: Color(0xFF2F6555), fontSize: 12),
+      ),
+    ],
+  );
 
-  String _formatDate(DateTime? date) => date == null ? 'Baru saja' : '${date.day}/${date.month}/${date.year}';
+  String _formatDate(DateTime? date) =>
+      date == null ? 'Baru saja' : '${date.day}/${date.month}/${date.year}';
+
+  // Fungsi helper untuk menghapus tanda pagar dan bintang khusus di tampilan pratinjau kartu
+  String _stripMarkdown(String text) {
+    String clean = text.replaceAll(RegExp(r'#+\s*'), '');
+    clean = clean.replaceAll(RegExp(r'\*+|_+'), '');
+    return clean.trim();
+  }
 
   Widget _buildDailyTarget() {
     return Container(
-      width: double.infinity, margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-      decoration: BoxDecoration(color: const Color(0xFFDFF5EC), borderRadius: BorderRadius.circular(22)),
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      decoration: BoxDecoration(
+        color: const Color(0xFFDFF5EC),
+        borderRadius: BorderRadius.circular(22),
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
         child: Column(
           children: [
-            const Text('Target Hari Ini', style: TextStyle(color: Color(0xFF006947), fontSize: 22, fontWeight: FontWeight.bold)),
+            const Text(
+              'Target Hari Ini',
+              style: TextStyle(
+                color: Color(0xFF006947),
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 10),
-            const Text('Kamu hampir mencapai target belajar harianmu! Buat rangkuman lagi untuk mempertahankan streak.', textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF2F6555), fontSize: 13, height: 1.5)),
+            const Text(
+              'Kamu hampir mencapai target belajar harianmu! Buat rangkuman lagi untuk mempertahankan streak.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFF2F6555),
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
-              onPressed: () => Navigator.pushNamed(context, '/create-rangkuman'),
+              onPressed: () =>
+                  Navigator.pushNamed(context, '/create-rangkuman'),
               icon: const Icon(Icons.arrow_forward, size: 16),
-              label: const Text('Lanjut Belajar', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF006947), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)), elevation: 0),
+              label: const Text(
+                'Lanjut Belajar',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF006947),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                elevation: 0,
+              ),
             ),
           ],
         ),
