@@ -107,7 +107,13 @@ class _PusatBantuanScreenState extends State<PusatBantuanScreen> {
                   color: Colors.white,
                   size: 20,
                 ),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else {
+                    Navigator.pushReplacementNamed(context, '/home');
+                  }
+                },
               ),
               const Text(
                 'Pusat Bantuan',

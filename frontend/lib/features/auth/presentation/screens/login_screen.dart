@@ -156,7 +156,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ],
                               ),
                               TextButton(
-                                onPressed: isLoading ? null : () {},
+                                onPressed: isLoading
+                                    ? null
+                                    : () => Navigator.pushNamed(
+                                        context, '/forgot-password'),
                                 child: const Text(
                                   'Lupa password?',
                                   style: TextStyle(color: Colors.grey, fontSize: 12),

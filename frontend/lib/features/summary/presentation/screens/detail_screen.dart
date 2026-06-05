@@ -75,7 +75,13 @@ class SummaryDetailScreen extends StatelessWidget {
             children: [
               IconButton(
                 icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else {
+                    Navigator.pushReplacementNamed(context, '/home');
+                  }
+                },
               ),
               const Text(
                 'Rangkuman',

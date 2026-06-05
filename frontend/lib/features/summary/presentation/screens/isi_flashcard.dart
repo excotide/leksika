@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'package:leksika/features/summary/presentation/screens/flashcard_dummy_data.dart';
 
 // ============================================================
 // PRESENTATION LAYER — Clean Architecture
@@ -7,7 +8,9 @@ import 'dart:math' as math;
 // ============================================================
 
 class FlashcardDetailPage extends StatefulWidget {
-  const FlashcardDetailPage({super.key});
+  final Animation<double>? bodyAnimation;
+
+  const FlashcardDetailPage({super.key, this.bodyAnimation});
 
   @override
   State<FlashcardDetailPage> createState() => _FlashcardDetailPageState();
@@ -26,10 +29,10 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
   // Flag: apakah sedang menampilkan sisi belakang (jawaban)?
   bool _isFlipped = false;
 
-  // Progress dummy — nantinya dari BLoC
-  // Representasi: 1 dari 12 kartu sudah diselesaikan
-  final int _currentCard = 1;
-  final int _totalCards = 12;
+  int _currentIndex = 0;
+  int _sudahMengerti = 0;
+  int _belumMengerti = 0;
+  bool _hasAnswered = false;
 
   @override
   void initState() {
@@ -67,6 +70,28 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
     setState(() => _isFlipped = !_isFlipped);
   }
 
+  void _nextCard() {
+    if (_currentIndex < dummyFlashcards.length - 1) {
+      setState(() {
+        _currentIndex++;
+        _isFlipped = false;
+        _hasAnswered = false;
+      });
+      _controller.reset();
+    }
+  }
+
+  void _prevCard() {
+    if (_currentIndex > 0) {
+      setState(() {
+        _currentIndex--;
+        _isFlipped = false;
+        _hasAnswered = false;
+      });
+      _controller.reset();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,31 +104,55 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
           decoration: const BoxDecoration(
             color: Color(0xFF006947),
             borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(48),
-              bottomRight: Radius.circular(48),
+              bottomLeft: Radius.circular(24),
+              bottomRight: Radius.circular(24),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Color(0x1A00362A),
-                blurRadius: 30,
-                offset: Offset(0, 10),
-              ),
-            ],
           ),
           child: SafeArea(
+            bottom: false,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Row(
-                children: const [
-                  BackButton(color: Colors.white),
-                  SizedBox(width: 4),
-                  Text(
+              padding: const EdgeInsets.fromLTRB(4, 8, 16, 16),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  const Text(
                     'Flashcard',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
+                        onPressed: () {
+                          if (Navigator.canPop(context)) {
+                            Navigator.pop(context);
+                          } else {
+                            Navigator.pushReplacementNamed(context, '/home');
+                          }
+                        },
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/notifikasi'),
+                        child: Container(
+                          width: 38,
+                          height: 38,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.notifications_none_outlined,
+                            color: Color(0xFF006947),
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -113,50 +162,88 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
       ),
 
       // ── Body ───────────────────────────────────────────────
-      body: Column(
-        children: [
-          // Scrollable content area — header + kartu
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-              child: Column(
-                children: [
-                  // Judul + badge bagian
-                  const _CardHeader(),
+      body: _buildBody(),
+    );
+  }
 
-                  const SizedBox(height: 24),
+  Widget _buildBody() {
+    final anim = widget.bodyAnimation;
+    final body = SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+        child: Column(
+          children: [
+            // Judul + badge bagian
+            _CardHeader(part: dummyFlashcards[_currentIndex]['part']!),
 
-                  // ── Flashcard yang bisa di-flip ─────────────
-                  // GestureDetector untuk deteksi tap → flip
-                  GestureDetector(
-                    onTap: _flipCard,
-                    child: _FlipCard(
-                      animation: _animation,
-                      currentCard: _currentCard,
-                      totalCards: _totalCards,
-                      // Konten sisi depan (soal)
-                      frontChild: const _CardFront(),
-                      // Konten sisi belakang (jawaban)
-                      backChild: _CardBack(
-                        onSudahMengerti: () {
-                          
-                          _flipCard(); // balik ke soal
-                        },
-                        onBelumMengerti: () {
-                          
-                          _flipCard(); // balik ke soal
-                        },
-                      ),
-                    ),
+            const SizedBox(height: 24),
+
+            // ── Flashcard yang bisa di-flip ─────────────
+            // GestureDetector untuk deteksi tap → flip
+            SizedBox(
+              height: 520,
+              child: GestureDetector(
+                onTap: _flipCard,
+                child: _FlipCard(
+                  animation: _animation,
+                  currentCard: _currentIndex + 1,
+                  totalCards: dummyFlashcards.length,
+                  frontChild: _CardFront(question: dummyFlashcards[_currentIndex]['question']!),
+                  backChild: _CardBack(
+                    answer: dummyFlashcards[_currentIndex]['answer']!,
+                    onSudahMengerti: () {
+                      setState(() {
+                        _sudahMengerti++;
+                        _hasAnswered = true;
+                      });
+                      _nextCard();
+                    },
+                    onBelumMengerti: () {
+                      setState(() {
+                        _belumMengerti++;
+                        _hasAnswered = true;
+                      });
+                      _nextCard();
+                    },
                   ),
-                ],
+                ),
               ),
             ),
-          ),
 
-          // ── Navigasi bawah: Kembali & Selanjutnya ──────────
-          const _BottomNav(),
-        ],
+            const SizedBox(height: 24),
+
+            // ── Navigasi: Kembali & Selanjutnya ──────────
+            _BottomNav(
+              onBack: _prevCard,
+              onNext: _nextCard,
+              hasAnswered: _hasAnswered,
+              isLastCard: _currentIndex == dummyFlashcards.length - 1 && _hasAnswered,
+              onSelesai: () => Navigator.pushNamed(
+                context,
+                '/hasil-flashcard',
+                arguments: {
+                  'totalCards': dummyFlashcards.length,
+                  'sudahMengerti': _sudahMengerti,
+                  'belumMengerti': _belumMengerti,
+                  'score': ((_sudahMengerti / dummyFlashcards.length) * 100).round(),
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+
+    if (anim == null) return body;
+
+    final slideTween = Tween<Offset>(
+      begin: const Offset(1.0, 0.0),
+      end: Offset.zero,
+    ).chain(CurveTween(curve: Curves.easeInOut));
+
+    return FadeTransition(
+      opacity: CurvedAnimation(parent: anim, curve: Curves.easeInOut),
+      child: SlideTransition(
+        position: anim.drive(slideTween),
+        child: body,
       ),
     );
   }
@@ -167,7 +254,9 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
 // Judul flashcard + badge "Bagian 1" di tengah.
 // ============================================================
 class _CardHeader extends StatelessWidget {
-  const _CardHeader();
+  final String part;
+
+  const _CardHeader({required this.part});
 
   @override
   Widget build(BuildContext context) {
@@ -175,7 +264,7 @@ class _CardHeader extends StatelessWidget {
       children: [
         // Judul bold hijau tua, center
         const Text(
-          'Flashcard - Virtual Private\nNetwork',
+          'Virtual Private\nNetwork',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: Color(0xFF004C31),
@@ -187,16 +276,16 @@ class _CardHeader extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        // Badge pill hijau muda "Bagian 1"
+        // Badge pill hijau muda "Bagian N"
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
           decoration: BoxDecoration(
             color: const Color(0xFF7EFBAE),
             borderRadius: BorderRadius.circular(9999),
           ),
-          child: const Text(
-            'Bagian 1',
-            style: TextStyle(
+          child: Text(
+            'Bagian $part',
+            style: const TextStyle(
               color: Color(0xFF007442),
               fontSize: 12,
               fontWeight: FontWeight.bold,
@@ -316,6 +405,7 @@ class _CardShell extends StatelessWidget {
 
     return Container(
       width: double.infinity,
+      height: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(27),
@@ -330,6 +420,7 @@ class _CardShell extends StatelessWidget {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
       child: Column(
+        mainAxisSize: MainAxisSize.max,
         children: [
           // Label "PROGRES"
           const Text(
@@ -374,7 +465,7 @@ class _CardShell extends StatelessWidget {
           const SizedBox(height: 32),
 
           // Slot konten — diisi oleh _CardFront atau _CardBack
-          child,
+          Expanded(child: child),
         ],
       ),
     );
@@ -387,17 +478,22 @@ class _CardShell extends StatelessWidget {
 // Tap tombol tidak perlu — user tap seluruh kartu untuk flip.
 // ============================================================
 class _CardFront extends StatelessWidget {
-  const _CardFront();
+  final String question;
+
+  const _CardFront({required this.question});
 
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
+        const Spacer(),
+
         // Teks soal — center, bold, hitam
-        const Text(
-          'VPN berfungsi seperti gerbang yang memastikan setiap data yang dikirim maupun diterima tidak lagi menggunakan jalur umum yang terbuka, melainkan terbungkus aman di dalam sistem perlindungan tambahan',
+        Text(
+          question,
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
             color: Color(0xFF000000),
             fontSize: 15,
             fontWeight: FontWeight.bold,
@@ -405,31 +501,7 @@ class _CardFront extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 40),
-
-        // Tombol "Lihat Jawaban" — border hijau, background putih
-        // Tap kartu sudah cukup untuk flip, tombol ini visual hint
-        OutlinedButton(
-          onPressed: null, // tap kartu yang trigger flip
-          style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: Color(0xFF059669), width: 2),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(7),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
-          ),
-          child: const Text(
-            'Lihat\nJawaban',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Color(0xFF000000),
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 24),
+        const Spacer(),
 
         // Hint tap
         const Text(
@@ -451,10 +523,12 @@ class _CardFront extends StatelessWidget {
 // Judul "JAWABAN" + dua tombol: Sudah Mengerti & Belum Mengerti
 // ============================================================
 class _CardBack extends StatelessWidget {
+  final String answer;
   final VoidCallback onSudahMengerti;
   final VoidCallback onBelumMengerti;
 
   const _CardBack({
+    required this.answer,
     required this.onSudahMengerti,
     required this.onBelumMengerti,
   });
@@ -462,7 +536,10 @@ class _CardBack extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
+        const Spacer(),
+
         // Label "JAWABAN" — bold, center, besar
         const Text(
           'JAWABAN',
@@ -474,9 +551,20 @@ class _CardBack extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 60),
+        const SizedBox(height: 24),
 
-        const SizedBox(height: 80),
+        Text(
+          answer,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Color(0xFF000000),
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
+        ),
+
+        const Spacer(),
 
         // Dua tombol berdampingan: Sudah Mengerti (hijau) & Belum Mengerti (kuning)
         Row(
@@ -546,62 +634,108 @@ class _CardBack extends StatelessWidget {
 // Navigasi bawah: tombol "< Kembali" dan "Selanjutnya >"
 // ============================================================
 class _BottomNav extends StatelessWidget {
-  const _BottomNav();
+  final VoidCallback onBack;
+  final VoidCallback onNext;
+  final bool isLastCard;
+  final bool hasAnswered;
+  final VoidCallback onSelesai;
+
+  const _BottomNav({
+    required this.onBack,
+    required this.onNext,
+    required this.isLastCard,
+    required this.hasAnswered,
+    required this.onSelesai,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
       color: const Color(0xFFE8F5EE),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          ElevatedButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.chevron_left, size: 18, color: Color(0xFF004C31)),
-            label: const Text(
-              'Kembali',
-              style: TextStyle(
-                color: Color(0xFF004C31),
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              ElevatedButton.icon(
+                onPressed: onBack,
+                icon: const Icon(Icons.chevron_left, size: 18, color: Color(0xFF004C31)),
+                label: const Text(
+                  'Kembali',
+                  style: TextStyle(
+                    color: Color(0xFF004C31),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF004C31),
+                  elevation: 2,
+                  shadowColor: Colors.black12,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
               ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF004C31),
-              elevation: 2,
-              shadowColor: Colors.black12,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
+
+              if (isLastCard)
+                // Tombol Selesai — hijau tua solid
+                ElevatedButton.icon(
+                  onPressed: onSelesai,
+                  icon: const Text(
+                    'Selesai',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  label: const Icon(Icons.check, size: 18, color: Colors.white),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF004C31),
+                    foregroundColor: Colors.white,
+                    elevation: 2,
+                    shadowColor: Colors.black12,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                )
+              else
+                // Tombol Selanjutnya — disabled sampai user jawab
+                Opacity(
+                  opacity: hasAnswered ? 1.0 : 0.4,
+                  child: ElevatedButton.icon(
+                    onPressed: hasAnswered ? onNext : null,
+                    icon: const Text(
+                      'Selanjutnya',
+                      style: TextStyle(
+                        color: Color(0xFF004C31),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    label: const Icon(Icons.chevron_right, size: 18, color: Color(0xFF004C31)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF004C31),
+                      elevation: 2,
+                      shadowColor: Colors.black12,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
 
-          // Tombol Selanjutnya
-          ElevatedButton.icon(
-            onPressed: () {},
-            icon: const Text(
-              'Selanjutnya',
-              style: TextStyle(
-                color: Color(0xFF004C31),
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            label: const Icon(Icons.chevron_right, size: 18, color: Color(0xFF004C31)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF004C31),
-              elevation: 2,
-              shadowColor: Colors.black12,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
-          ),
         ],
       ),
     );

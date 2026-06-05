@@ -28,16 +28,31 @@ class _SetelanView extends StatelessWidget {
     // backgroundColor
     return Scaffold(
       backgroundColor: const Color(0xFFE8F5EE),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF004C31),
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'Profil',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(72),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF006947),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(24),
+              bottomRight: Radius.circular(24),
+            ),
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(4, 8, 16, 16),
+              child: const Center(
+                child: Text(
+                  'Profil',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -270,7 +285,7 @@ class _StatsCard extends StatelessWidget {
       // Kartu putih dengan sudut membulat dan shadow halus.
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(30),
         boxShadow: const [
           BoxShadow(
             color: Color(0x14000000),
@@ -483,7 +498,7 @@ class _ActionButton extends StatelessWidget {
           foregroundColor: textColor,
           elevation: 2,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(30),
           ),
         ),
 

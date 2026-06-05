@@ -6,7 +6,7 @@ class BottomNavbar extends StatelessWidget {
   final int activeIndex;
 
   void _smoothPush(BuildContext context, String route) {
-    Navigator.of(context).pushNamed(route);
+    Navigator.of(context).pushReplacementNamed(route);
   }
 
   @override
@@ -70,19 +70,20 @@ class BottomNavbar extends StatelessWidget {
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeInOut,
-              padding:
-                  isActive ? const EdgeInsets.all(6) : const EdgeInsets.all(0),
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                color:
-                    isActive ? const Color(0xFFB7EDD9) : Colors.transparent,
+                color: isActive ? const Color(0xFFB7EDD9) : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                icon,
-                color: isActive
-                    ? const Color(0xFF064E3B)
-                    : const Color(0xFF059669),
-                size: isActive ? 20 : 22,
+              child: Center(
+                child: Icon(
+                  icon,
+                  color: isActive
+                      ? const Color(0xFF064E3B)
+                      : const Color(0xFF059669),
+                  size: 22,
+                ),
               ),
             ),
             const SizedBox(height: 2),

@@ -47,7 +47,7 @@ class _RangkumanLoadingOverlayState extends State<RangkumanLoadingOverlay> {
   }
 
   void _cancel() {
-    Navigator.pop(context);
+    if (Navigator.canPop(context)) Navigator.pop(context);
   }
 
   @override

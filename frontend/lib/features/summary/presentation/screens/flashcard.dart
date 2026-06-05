@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:leksika/features/summary/presentation/widgets/bottom_navbar.dart';
+import 'package:leksika/features/summary/presentation/screens/flashcard_dummy_data.dart';
 
 // ============================================================
 // PRESENTATION LAYER — Clean Architecture
@@ -11,34 +12,30 @@ class FlashcardItem {
   final String fileName;
   final int cardCount;
   final int durationMinutes;
-  final double progress; // 0.0 - 1.0, null berarti belum ada progress
 
   const FlashcardItem({
     required this.fileName,
     required this.cardCount,
     required this.durationMinutes,
-    this.progress = 0.0,
   });
 }
 
 class FlashcardPage extends StatelessWidget {
   const FlashcardPage({super.key});
 
-  // Data dummy — nantinya diambil dari BLoC/Cubit via repository
-  static const _items = [
-    FlashcardItem(
-      fileName: 'Virtual Private Network.pdf',
-      cardCount: 12,
-      durationMinutes: 15,
-      progress: 0.55, // card pertama punya progress bar
-    ),
-    FlashcardItem(
-      fileName: 'Virtual Private Network.pdf',
-      cardCount: 12,
-      durationMinutes: 15,
-      progress: 0.0, // card kedua belum ada progress
-    ),
-  ];
+  // Data item flashcard dibangun dari dummyFlashcards agar selalu sinkron
+  static List<FlashcardItem> get _items {
+    final topic = dummyFlashcards.first['topic'] ?? 'Flashcard';
+    final cardCount = dummyFlashcards.length;
+    final durationMinutes = (cardCount * 1.5).ceil();
+    return [
+      FlashcardItem(
+        fileName: '$topic.pdf',
+        cardCount: cardCount,
+        durationMinutes: durationMinutes,
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,31 +56,23 @@ class FlashcardPage extends StatelessWidget {
       bottomNavigationBar: const BottomNavbar(activeIndex: 2),
 
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(80),
+        preferredSize: const Size.fromHeight(72),
         child: Container(
           decoration: const BoxDecoration(
             color: Color(0xFF006947),
             borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(48),
-              bottomRight: Radius.circular(48),
+              bottomLeft: Radius.circular(24),
+              bottomRight: Radius.circular(24),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Color(0x1A00362A),
-                blurRadius: 30,
-                offset: Offset(0, 10),
-              ),
-            ],
           ),
           child: SafeArea(
+            bottom: false,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
+              padding: const EdgeInsets.fromLTRB(4, 8, 16, 16),
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  // Tombol back
-                  const BackButton(color: Colors.white),
-                  const SizedBox(width: 4),
-                  // Judul halaman
+                  // Judul halaman — benar-benar di tengah
                   const Text(
                     'Flashcard',
                     style: TextStyle(
@@ -92,6 +81,37 @@ class FlashcardPage extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
+                    onPressed: () {
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      } else {
+                        Navigator.pushReplacementNamed(context, '/home');
+                      }
+                    },
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.pushNamed(context, '/notifikasi'),
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications_none_outlined,
+                        color: Color(0xFF006947),
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
                 ],
               ),
             ),
@@ -184,6 +204,8 @@ class _FlashcardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    void navigate() => Navigator.pushNamed(context, '/isi-flashcard');
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -196,80 +218,85 @@ class _FlashcardCard extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Baris atas: ikon dokumen kiri, panah kanan ──────
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Ikon dokumen — hijau tua, ukuran 48x48
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE3F2E7),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.insert_drive_file_outlined,
-                  color: Color(0xFF004C31),
-                  size: 28,
-                ),
-              ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: navigate,
+          borderRadius: BorderRadius.circular(12),
+          splashColor: const Color(0x1A004C31),
+          highlightColor: const Color(0x0D004C31),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Baris atas: ikon dokumen kiri, panah kanan ──────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Ikon dokumen — hijau tua, ukuran 48x48
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE3F2E7),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.insert_drive_file_outlined,
+                        color: Color(0xFF004C31),
+                        size: 28,
+                      ),
+                    ),
 
-              // Ikon panah diagonal ke kanan atas (open / navigate)
-              GestureDetector(
-                onTap: () => Navigator.pushNamed(context, '/isi-flashcard'),
-                child: const Icon(
-                  Icons.open_in_new,
-                  color: Color(0xFF004C31),
-                  size: 18,
+                    // Ikon panah diagonal ke kanan atas (open / navigate)
+                    GestureDetector(
+                      onTap: navigate,
+                      child: const Icon(
+                        Icons.open_in_new,
+                        color: Color(0xFF004C31),
+                        size: 18,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
 
-          const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-          // ── Nama file ────────────────────────────────────────
-          Text(
-            item.fileName,
-            style: const TextStyle(
-              color: Color(0xFF121E18),
-              fontSize: 15,
+                // ── Nama file ────────────────────────────────────────
+                Text(
+                  item.fileName,
+                  style: const TextStyle(
+                    color: Color(0xFF121E18),
+                    fontSize: 15,
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                // ── Meta info: cards + durasi ─────────────────────────
+                Row(
+                  children: [
+                    _MetaChip(
+                      icon: Icons.style_outlined,
+                      label: '${item.cardCount} Cards',
+                    ),
+
+                    const SizedBox(width: 16),
+
+                    _MetaChip(
+                      icon: Icons.access_time_outlined,
+                      label: '${item.durationMinutes}m',
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-
-          const SizedBox(height: 8),
-
-          // ── Meta info: cards + durasi ─────────────────────────
-          Row(
-            children: [
-              // Jumlah kartu
-              _MetaChip(
-                icon: Icons.style_outlined,
-                label: '${item.cardCount} Cards',
-              ),
-
-              const SizedBox(width: 16),
-
-              // Estimasi durasi
-              _MetaChip(
-                icon: Icons.access_time_outlined,
-                label: '${item.durationMinutes}m',
-              ),
-            ],
-          ),
-
-          // ── Progress bar (hanya tampil kalau ada progress) ──
-          if (item.progress > 0) ...[
-            const SizedBox(height: 16),
-            _ProgressBar(value: item.progress),
-          ],
-        ],
+        ),
       ),
     );
   }
@@ -303,43 +330,3 @@ class _MetaChip extends StatelessWidget {
   }
 }
 
-// ============================================================
-// WIDGET — _ProgressBar
-// Progress bar pill shape hijau tua di atas background hijau muda.
-// value: 0.0 - 1.0
-// ============================================================
-class _ProgressBar extends StatelessWidget {
-  final double value;
-
-  const _ProgressBar({required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final trackWidth = constraints.maxWidth;
-        final fillWidth = trackWidth * value.clamp(0.0, 1.0);
-
-        return Container(
-          width: trackWidth,
-          height: 6,
-          decoration: BoxDecoration(
-            color: const Color(0xFFE3F2E7),
-            borderRadius: BorderRadius.circular(9999),
-          ),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              width: fillWidth,
-              height: 6,
-              decoration: BoxDecoration(
-                color: const Color(0xFF004C31),
-                borderRadius: BorderRadius.circular(9999),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}

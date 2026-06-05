@@ -164,7 +164,9 @@ class HomeScreenState extends State<HomeScreen> {
         content: const Text('Apakah Anda yakin ingin keluar?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              if (Navigator.canPop(context)) Navigator.pop(context);
+            },
             child: const Text('Batal'),
           ),
           TextButton(
@@ -314,21 +316,24 @@ class HomeScreenState extends State<HomeScreen> {
   Widget _buildHistorySection() {
     return BlocBuilder<SummaryBloc, SummaryState>(
       builder: (context, state) {
-        if (state is SummaryLoading)
+        if (state is SummaryLoading) {
           return const LoadingWidget(message: 'Memuat data...');
-        if (state is SummaryFailure)
+        }
+        if (state is SummaryFailure) {
           return ErrorView(
             message: state.message,
             onRetry: () => context.read<SummaryBloc>().add(
               const FetchDocumentsRequested(),
             ),
           );
+        }
         if (state is SummaryListLoaded) {
-          if (state.documents.isEmpty)
+          if (state.documents.isEmpty) {
             return const Padding(
               padding: EdgeInsets.all(20),
               child: Text('Belum ada riwayat rangkuman.'),
             );
+          }
           return Column(
             children: state.documents
                 .take(2)

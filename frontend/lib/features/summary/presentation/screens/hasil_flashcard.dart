@@ -6,17 +6,18 @@ import 'package:flutter/material.dart';
 // ============================================================
 
 class FlashcardResultPage extends StatelessWidget {
-  const FlashcardResultPage({super.key});
+  final Animation<double> bodyAnimation;
 
-  // Data dummy — normalnya dari BLoC/state setelah sesi selesai
-  static const String _topicName = 'Virtual Private Network';
-  static const int _totalCards = 10;
-  static const int _score = 80;
-  static const int _sudahMengerti = 8;
-  static const int _belumMengerti = 2;
+  const FlashcardResultPage({super.key, required this.bodyAnimation});
 
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final totalCards = args?['totalCards'] as int? ?? 0;
+    final score = args?['score'] as int? ?? 0;
+    final sudahMengerti = args?['sudahMengerti'] as int? ?? 0;
+    final belumMengerti = args?['belumMengerti'] as int? ?? 0;
+
     return Scaffold(
       backgroundColor: const Color(0xFFE8F5EE),
 
@@ -27,31 +28,40 @@ class FlashcardResultPage extends StatelessWidget {
           decoration: const BoxDecoration(
             color: Color(0xFF006947),
             borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(48),
-              bottomRight: Radius.circular(48),
+              bottomLeft: Radius.circular(24),
+              bottomRight: Radius.circular(24),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Color(0x1A00362A),
-                blurRadius: 30,
-                offset: Offset(0, 10),
-              ),
-            ],
           ),
           child: SafeArea(
+            bottom: false,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Row(
-                children: const [
-                  BackButton(color: Colors.white),
-                  SizedBox(width: 4),
-                  Text(
+              padding: const EdgeInsets.fromLTRB(4, 8, 16, 16),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  const Text(
                     'Hasil Flashcard',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
+                        onPressed: () {
+                          if (Navigator.canPop(context)) {
+                            Navigator.pop(context);
+                          } else {
+                            Navigator.pushReplacementNamed(context, '/home');
+                          }
+                        },
+                      ),
+                      const SizedBox.shrink(),
+                    ],
                   ),
                 ],
               ),
@@ -60,51 +70,54 @@ class FlashcardResultPage extends StatelessWidget {
         ),
       ),
 
-      body: Column(
-        children: [
-          // Scrollable content
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(
-                top: 28,
-                left: 24,
-                right: 24,
-                bottom: 16,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 1. Header: "SESI SELESAI" + nama topik + jumlah kartu
-                  const _SessionHeader(
-                    topicName: _topicName,
-                    totalCards: _totalCards,
+      body: SlideTransition(
+        position: Tween(begin: const Offset(0, 0.15), end: Offset.zero)
+            .chain(CurveTween(curve: Curves.easeOutCubic))
+            .animate(bodyAnimation),
+        child: FadeTransition(
+          opacity: CurvedAnimation(parent: bodyAnimation, curve: Curves.easeOut),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(
+              top: 28,
+              left: 24,
+              right: 24,
+              bottom: 32,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Header: "SESI SELESAI" + nama topik + jumlah kartu
+                _SessionHeader(
+                  topicName: 'Virtual Private Network',
+                  totalCards: totalCards,
+                ),
+
+                const SizedBox(height: 28),
+
+                // 2. Kartu skor utama
+                _ScoreCard(
+                  score: score,
+                  sudahMengerti: sudahMengerti,
+                  belumMengerti: belumMengerti,
+                ),
+
+                const SizedBox(height: 24),
+
+                // 3. Tombol aksi: Ulangi & Selesai
+                _BottomActions(
+                  onUlangi: () => Navigator.pushReplacementNamed(context, '/isi-flashcard'),
+                  onSelesai: () => Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/flashcard',
+                    (route) => false,
                   ),
+                ),
 
-                  const SizedBox(height: 28),
-
-                  // 2. Kartu skor utama
-                  const _ScoreCard(
-                    score: _score,
-                    sudahMengerti: _sudahMengerti,
-                    belumMengerti: _belumMengerti,
-                  ),
-
-                  const SizedBox(height: 28),
-                ],
-              ),
+                const SizedBox(height: 32),
+              ],
             ),
           ),
-
-          // 3. Tombol aksi bawah: Ulangi & Selesai
-          _BottomActions(
-            onUlangi: () {
-            
-            },
-            onSelesai: () {
-          
-            },
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -188,15 +201,6 @@ class _SessionHeader extends StatelessWidget {
   }
 }
 
-// ============================================================
-// WIDGET — _ScoreCard
-// Kartu putih bulat berisi:
-//   - Label "SKOR KAMU"
-//   - Angka skor besar hijau neon
-//   - Sub-teks motivasi
-//   - Divider garis putus-putus
-//   - Dua kolom: sudah mengerti (hijau) vs belum mengerti (merah)
-// ============================================================
 class _ScoreCard extends StatelessWidget {
   final int score;
   final int sudahMengerti;
@@ -208,7 +212,6 @@ class _ScoreCard extends StatelessWidget {
     required this.belumMengerti,
   });
 
-  // Teks motivasi berdasarkan skor
   String get _motivationText {
     if (score >= 80) return 'Bagus! Terus tingkatkan';
     if (score >= 60) return 'Lumayan! Masih bisa lebih baik';
@@ -234,7 +237,6 @@ class _ScoreCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
       child: Column(
         children: [
-          // Label "SKOR KAMU" — abu, bold, agak besar
           const Text(
             'SKOR KAMU',
             style: TextStyle(
@@ -246,7 +248,6 @@ class _ScoreCard extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // Angka skor — sangat besar, hijau neon (#00FF5D)
           Text(
             '$score',
             style: const TextStyle(
@@ -283,7 +284,7 @@ class _ScoreCard extends StatelessWidget {
               _StatColumn(
                 value: '$sudahMengerti',
                 valueColor: const Color(0xFF059669),
-                label: 'sudah\nMengerti',
+                label: 'Sudah\nMengerti',
               ),
 
               // Jarak antar kolom
@@ -293,7 +294,7 @@ class _ScoreCard extends StatelessWidget {
               _StatColumn(
                 value: '$belumMengerti',
                 valueColor: const Color(0xFFD92528),
-                label: 'belum\nmengerti',
+                label: 'Belum\nMengerti',
               ),
             ],
           ),

@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leksika/core/di/injection_container.dart';
 import 'package:leksika/core/router/smooth_page_route.dart';
+import 'package:leksika/core/transitions/app_transitions.dart';
 import 'package:leksika/features/auth/presentation/screens/login_screen.dart';
 import 'package:leksika/features/auth/presentation/screens/onboarding_screen.dart';
 import 'package:leksika/features/auth/presentation/screens/otp_screen.dart';
 import 'package:leksika/features/auth/presentation/screens/register_screen.dart';
 import 'package:leksika/features/auth/presentation/screens/splash_screen.dart';
+import 'package:leksika/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:leksika/features/summary/presentation/screens/create_rangkuman_screen.dart';
 import 'package:leksika/features/summary/presentation/screens/detail_screen.dart';
@@ -16,6 +18,7 @@ import 'package:leksika/features/summary/presentation/screens/riwayat_screen.dar
 import 'package:leksika/features/summary/presentation/screens/summary_screen.dart';
 import 'package:leksika/features/summary/presentation/screens/flashcard.dart';
 import 'package:leksika/features/summary/presentation/screens/isi_flashcard.dart';
+import 'package:leksika/features/summary/presentation/screens/hasil_flashcard.dart';
 import 'package:leksika/features/summary/presentation/screens/profile.dart';
 import 'package:leksika/features/summary/presentation/screens/edit_profile.dart';
 import 'package:leksika/shared/widgets/placeholder_screen.dart';
@@ -52,26 +55,44 @@ class AppRouter {
             child: const OtpScreen(),
           ),
         );
+      case '/forgot-password':
+        return SmoothPageRoute(page: const ForgotPasswordScreen());
       case '/home':
-        return SmoothPageRoute(page: const HomeScreen());
-      case '/notifikasi': // ← tambahan
+        return FadeRoute(page: const HomeScreen(), settings: settings);
+      case '/notifikasi':
         return SmoothPageRoute(page: const NotificationScreen());
       case '/riwayat':
-        return SmoothPageRoute(page: const RiwayatScreen());
+        return FadeRoute(page: const RiwayatScreen(), settings: settings);
       case '/create-rangkuman':
-        return SmoothPageRoute(page: const CreateRangkumanScreen());
+        return SlideRightToLeftRoute(page: const CreateRangkumanScreen(), settings: settings);
       case '/detail':
-        return SmoothPageRoute(page: _buildDetailFromArgs(settings.arguments));
+        return SlideRightToLeftRoute(page: _buildDetailFromArgs(settings.arguments), settings: settings);
       case '/summary':
         return SmoothPageRoute(page: const SummaryScreen());
       case '/flashcard':
-        return SmoothPageRoute(page: const FlashcardPage());
+        return FadeRoute(page: const FlashcardPage(), settings: settings);
       case '/isi-flashcard':
-        return SmoothPageRoute(page: const FlashcardDetailPage());
+        return PageRouteBuilder(
+          settings: settings,
+          transitionDuration: const Duration(milliseconds: 300),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              FlashcardDetailPage(bodyAnimation: animation),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) => child,
+        );
+      case '/hasil-flashcard':
+        return PageRouteBuilder(
+          settings: settings,
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 400),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              FlashcardResultPage(bodyAnimation: animation),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) => child,
+        );
       case '/profil':
-        return SmoothPageRoute(page: const SetelanPage());
+        return FadeRoute(page: const SetelanPage(), settings: settings);
       case '/edit-profil':
-        return SmoothPageRoute(page: const EditProfilePage());
+        return SlideRightToLeftRoute(page: const EditProfilePage(), settings: settings);
       default:
         return SmoothPageRoute(
             page: const PlaceholderScreen(title: 'Not Found'));

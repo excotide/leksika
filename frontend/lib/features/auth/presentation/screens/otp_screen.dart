@@ -142,7 +142,9 @@ class _OtpScreenState extends State<OtpScreen> {
           backgroundColor: _greenLight,
           elevation: 0,
           leading: GestureDetector(
-            onTap: () => Navigator.pop(context),
+            onTap: () {
+              if (Navigator.canPop(context)) Navigator.pop(context);
+            },
             child: Container(
               margin: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
               decoration: BoxDecoration(

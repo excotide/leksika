@@ -121,7 +121,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Profil berhasil diperbarui')),
             );
-            Navigator.pop(context);
+            if (Navigator.canPop(context)) Navigator.pop(context);
           }
         } else if (state is ProfilePhotoUpdated) {
           // Upload foto selesai (langkah terakhir)
@@ -132,7 +132,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Profil & foto berhasil diperbarui')),
           );
-          Navigator.pop(context);
+          if (Navigator.canPop(context)) Navigator.pop(context);
         } else if (state is ProfileError) {
           setState(() => _savePressed = false);
           if (_textSaved) {
@@ -147,7 +147,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
                 duration: Duration(seconds: 4),
               ),
             );
-            Navigator.pop(context);
+            if (Navigator.canPop(context)) Navigator.pop(context);
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
@@ -168,16 +168,45 @@ class _EditProfileViewState extends State<_EditProfileView> {
           backgroundColor: const Color(0xFFE3F2E7),
 
           // ── AppBar ────────────────────────────────────────────────
-          appBar: AppBar(
-            backgroundColor: const Color(0xFF004C31),
-            elevation: 0,
-            leading: const BackButton(color: Colors.white),
-            title: const Text(
-              'Setelan',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(72),
+            child: Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Color(0xFF006947),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 8, 16, 16),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
+                        onPressed: () {
+                          if (Navigator.canPop(context)) {
+                            Navigator.pop(context);
+                          } else {
+                            Navigator.pushReplacementNamed(context, '/home');
+                          }
+                        },
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Setelan',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

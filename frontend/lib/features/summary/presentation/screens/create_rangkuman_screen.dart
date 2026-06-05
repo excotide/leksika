@@ -66,7 +66,7 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
           } else if (state is SummaryDetailLoaded) {
             if (_isLoadingVisible) {
               _isLoadingVisible = false;
-              Navigator.pop(context);
+              if (Navigator.canPop(context)) Navigator.pop(context);
             }
             Navigator.pushReplacementNamed(
               context,
@@ -84,7 +84,7 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
           } else if (state is SummaryFailure) {
             if (_isLoadingVisible) {
               _isLoadingVisible = false;
-              Navigator.pop(context);
+              if (Navigator.canPop(context)) Navigator.pop(context);
             }
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -184,7 +184,13 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
                   color: Colors.white,
                   size: 20,
                 ),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else {
+                    Navigator.pushReplacementNamed(context, '/home');
+                  }
+                },
               ),
               const Text(
                 'Buat Rangkuman',

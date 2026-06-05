@@ -273,7 +273,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const SizedBox(height: 15),
                           TextButton(
                             onPressed:
-                                isLoading ? null : () => Navigator.pop(context),
+                                isLoading ? null : () {
+                                  if (Navigator.canPop(context)) Navigator.pop(context);
+                                },
                             child: const Text(
                               'Sudah punya akun? Log in',
                               style: TextStyle(color: Color(0xFF006947)),

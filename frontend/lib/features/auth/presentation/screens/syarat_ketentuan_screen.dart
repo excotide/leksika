@@ -81,7 +81,9 @@ class _SyaratKetentuanScreenState extends State<SyaratKetentuanScreen> {
                   color: Colors.white,
                   size: 20,
                 ),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  if (Navigator.canPop(context)) Navigator.pop(context);
+                },
               ),
               const Text(
                 'Syarat & Ketentuan',
