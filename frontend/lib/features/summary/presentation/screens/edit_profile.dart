@@ -43,6 +43,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
 
   bool _initialized = false;
   bool _savePressed = false;
+  bool _textSaved = false;
   String? _pickedImagePath;
 
   @override
@@ -110,7 +111,8 @@ class _EditProfileViewState extends State<_EditProfileView> {
           _populate(state.profile);
         } else if (state is ProfileUpdated && _savePressed) {
           if (_pickedImagePath != null) {
-            // Teks profil tersimpan, masih menunggu upload foto — jangan pop dulu
+            // Teks profil tersimpan, masih menunggu upload foto — tandai & tunggu
+            setState(() => _textSaved = true);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Profil tersimpan, mengupload foto...')),
             );
@@ -122,17 +124,35 @@ class _EditProfileViewState extends State<_EditProfileView> {
             Navigator.pop(context);
           }
         } else if (state is ProfilePhotoUpdated) {
-          // Upload foto selesai (langkah terakhir saat Save dengan foto)
-          setState(() => _pickedImagePath = null);
+          // Upload foto selesai (langkah terakhir)
+          setState(() {
+            _pickedImagePath = null;
+            _textSaved = false;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Profil & foto berhasil diperbarui')),
           );
           Navigator.pop(context);
         } else if (state is ProfileError) {
           setState(() => _savePressed = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
+          if (_textSaved) {
+            // Teks profil sudah tersimpan, hanya foto yang gagal — tetap pop
+            setState(() {
+              _textSaved = false;
+              _pickedImagePath = null;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Profil tersimpan. Foto gagal diupload, coba lagi nanti.'),
+                duration: Duration(seconds: 4),
+              ),
+            );
+            Navigator.pop(context);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
         }
       },
       builder: (context, state) {

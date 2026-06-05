@@ -17,15 +17,22 @@ class ProfileController extends Controller
      */
     private function formatUser(User $user): array
     {
+        // Gunakan domain dari request agar URL avatar selalu benar di semua
+        // environment (lokal, production, dll) tanpa tergantung APP_URL di .env.
+        $avatarUrl = null;
+        if ($user->avatar_path) {
+            $avatarUrl = request()->getSchemeAndHttpHost()
+                . '/storage/'
+                . $user->avatar_path;
+        }
+
         return [
             'name'        => $user->name,
             'email'       => $user->email,
             'bio'         => $user->bio,
             'institution' => $user->institution,
             'address'     => $user->address,
-            'avatar_url'  => $user->avatar_path
-                ? asset('storage/' . $user->avatar_path)
-                : null,
+            'avatar_url'  => $avatarUrl,
         ];
     }
 
