@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:leksika/core/network/dio_client.dart';
+import 'package:leksika/core/services/fcm_notification_service.dart';
 import 'package:leksika/core/storage/secure_storage.dart';
 import 'package:leksika/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:leksika/features/auth/data/repositories/auth_repository_impl.dart';
@@ -46,6 +47,10 @@ Future<void> init() async {
       () => DioClient(sl<SecureStorage>()),
     )
     ..registerLazySingleton<Dio>(() => sl<DioClient>().dio);
+
+  sl.registerLazySingleton<FcmNotificationService>(
+    () => FcmNotificationService(sl<Dio>()),
+  );
 
   sl
     ..registerLazySingleton<AuthRemoteDataSource>(

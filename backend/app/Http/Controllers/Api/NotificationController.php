@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use App\Models\Document; // Wajib di-import untuk mencari file terakhir sebagai bahan kuis
+use App\Services\FcmService;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
@@ -43,6 +44,17 @@ class NotificationController extends Controller
             'type'        => 'quiz_reminder',
             'is_read'     => \Illuminate\Support\Facades\DB::raw('false')
         ]);
+
+        app(FcmService::class)->sendToUser(
+            $request->user()->id,
+            $notification->title,
+            $notification->message,
+            [
+                'notification_id' => $notification->id,
+                'document_id' => $lastDocument->id,
+                'type' => $notification->type,
+            ],
+        );
 
         return response()->json([
             'status' => true,

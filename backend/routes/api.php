@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProfileController;
@@ -21,6 +22,10 @@ Route::middleware('auth:sanctum')->group(function () {
 // Routes Protected (Harus Login + Verified)
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::post('/fcm-token', [DeviceTokenController::class, 'store']);
+
+    Route::delete('/fcm-token', [DeviceTokenController::class, 'destroy']);
 
     Route::get('/documents', [DocumentController::class, 'index']);
 

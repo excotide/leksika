@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leksika/core/di/injection_container.dart';
+import 'package:leksika/features/summary/domain/entities/document_entity.dart';
 import 'package:leksika/features/summary/domain/entities/notification_entity.dart';
+import 'package:leksika/features/summary/domain/usecases/get_summary_usecase.dart';
 import 'package:leksika/features/summary/presentation/bloc/notification_bloc.dart';
 import 'package:leksika/features/summary/presentation/bloc/notification_event.dart';
 import 'package:leksika/features/summary/presentation/bloc/notification_state.dart';
 
 class NotificationItem {
   final int id;
+  final int? documentId;
   final String title;
   final String body;
   final String time;
@@ -17,6 +20,7 @@ class NotificationItem {
 
   NotificationItem({
     required this.id,
+    this.documentId,
     required this.title,
     required this.body,
     required this.time,
@@ -50,6 +54,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         .map(
           (notification) => NotificationItem(
             id: notification.id,
+            documentId: notification.documentId,
             title: notification.title,
             body: notification.message,
             time: _formatTime(notification.createdAt),
@@ -135,6 +140,87 @@ class _NotificationScreenState extends State<NotificationScreen> {
           .read<NotificationBloc>()
           .add(MarkNotificationReadRequested(item.id));
     }
+  }
+
+  void _openNotificationDetail(BuildContext context, NotificationItem item) {
+    _markOneRead(context, item);
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(item.title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(item.body),
+            const SizedBox(height: 12),
+            Text(
+              item.time.isEmpty ? 'Baru saja' : item.time,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Tutup'),
+          ),
+          if (item.documentId != null)
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                _openRelatedDocument(context, item);
+              },
+              child: Text(
+                item.type == NotifType.motivasi
+                    ? 'Buka Flashcard'
+                    : 'Buka Rangkuman',
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openRelatedDocument(
+    BuildContext context,
+    NotificationItem item,
+  ) async {
+    final document = await _loadDocument(item.documentId!);
+    if (!mounted) return;
+
+    if (document == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Materi terkait belum bisa dibuka. Coba lagi nanti.')),
+      );
+      return;
+    }
+
+    if (item.type == NotifType.motivasi && document.flashcards.isNotEmpty) {
+      Navigator.pushNamed(context, '/isi-flashcard', arguments: document);
+      return;
+    }
+
+    Navigator.pushNamed(
+      context,
+      '/detail',
+      arguments: {
+        'title': document.title.isEmpty ? 'Rangkuman' : document.title,
+        'pageCount': 'Ringkasan',
+        'contents': [
+          {'subTitle': 'Ringkasan', 'body': document.summary},
+        ],
+        'document': document,
+      },
+    );
+  }
+
+  Future<DocumentEntity?> _loadDocument(int documentId) async {
+    final result = await sl<GetDocumentDetailUsecase>()(
+      GetDocumentDetailParams(id: documentId),
+    );
+    return result.fold((_) => null, (document) => document);
   }
 
   @override
@@ -264,7 +350,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     final isUnread = !item.isRead;
 
     return GestureDetector(
-      onTap: () => _markOneRead(context, item),
+      onTap: () => _openNotificationDetail(context, item),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
         decoration: BoxDecoration(
@@ -347,7 +433,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Widget _buildTipsCard(BuildContext context, NotificationItem item) {
     return GestureDetector(
-      onTap: () => _markOneRead(context, item),
+      onTap: () => _openNotificationDetail(context, item),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
         padding: const EdgeInsets.all(18),

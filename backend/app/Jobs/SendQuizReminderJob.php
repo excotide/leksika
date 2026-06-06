@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Notification;
 use App\Models\Document;
 use App\Models\User;
+use App\Services\FcmService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -41,7 +42,7 @@ class SendQuizReminderJob implements ShouldQueue
             return;
         }
 
-        Notification::create([
+        $notification = Notification::create([
             'user_id'     => $this->userId,
             'document_id' => $document->id,
             'title'       => 'Yuk, Review Materi Lagi! 🧠',
@@ -49,6 +50,17 @@ class SendQuizReminderJob implements ShouldQueue
             'type'        => 'quiz_reminder',
             'is_read'     => \Illuminate\Support\Facades\DB::raw('false')
         ]);
+
+        app(FcmService::class)->sendToUser(
+            $this->userId,
+            $notification->title,
+            $notification->message,
+            [
+                'notification_id' => $notification->id,
+                'document_id' => $document->id,
+                'type' => $notification->type,
+            ],
+        );
 
         $nextDay = 3;
         $delayInDays = 3;

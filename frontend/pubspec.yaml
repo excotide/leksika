@@ -46,6 +46,8 @@ dependencies:
   mobkit_dashed_border: ^0.0.8
   shared_preferences: ^2.5.5
   file_picker: ^11.0.2
+  firebase_core: ^3.15.2
+  firebase_messaging: ^15.2.10
   flutter_markdown: ^0.7.7+1
   google_sign_in: ^6.2.1
 

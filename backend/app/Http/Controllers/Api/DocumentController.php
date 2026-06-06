@@ -8,6 +8,7 @@ use App\Models\Document;
 use App\Models\Summary;
 use App\Models\Flashcard; 
 use App\Models\Notification; 
+use App\Services\FcmService;
 use App\Services\SummaryService;
 use App\Support\DocumentTitleFormatter;
 use Illuminate\Http\Request;
@@ -161,7 +162,7 @@ PANDUAN KETAT KONTEN RANGKUMAN:
                 }
             }
 
-            Notification::create([
+            $summaryNotification = Notification::create([
                 'user_id'     => $request->user()->id,
                 'document_id' => $document->id,
                 'title'       => 'Rangkuman Siap! 📚',
@@ -170,8 +171,19 @@ PANDUAN KETAT KONTEN RANGKUMAN:
                 'is_read'     => DB::raw('false')
             ]);
 
+            app(FcmService::class)->sendToUser(
+                $request->user()->id,
+                $summaryNotification->title,
+                $summaryNotification->message,
+                [
+                    'notification_id' => $summaryNotification->id,
+                    'document_id' => $document->id,
+                    'type' => $summaryNotification->type,
+                ],
+            );
+
             if ($wantsQuiz && $flashcardSavedCount > 0) {
-                Notification::create([
+                $quizNotification = Notification::create([
                     'user_id'     => $request->user()->id,
                     'document_id' => $document->id,
                     'title'       => 'Asah Otak Sekarang! 🧠',
@@ -179,6 +191,17 @@ PANDUAN KETAT KONTEN RANGKUMAN:
                     'type'        => 'quiz_reminder',
                     'is_read'     => DB::raw('false')
                 ]);
+
+                app(FcmService::class)->sendToUser(
+                    $request->user()->id,
+                    $quizNotification->title,
+                    $quizNotification->message,
+                    [
+                        'notification_id' => $quizNotification->id,
+                        'document_id' => $document->id,
+                        'type' => $quizNotification->type,
+                    ],
+                );
 
                 \App\Jobs\SendQuizReminderJob::dispatch(
                     $request->user()->id, 
