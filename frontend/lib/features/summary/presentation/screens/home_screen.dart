@@ -33,30 +33,46 @@ class HomeScreenState extends State<HomeScreen> {
           create: (_) => sl<ProfileBloc>()..add(const LoadProfile()),
         ),
       ],
-      child: Scaffold(
-        backgroundColor: const Color(0xFFE8FAF2),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => Navigator.pushNamed(context, '/create-rangkuman'),
-          backgroundColor: const Color(0xFF006947),
-          shape: const CircleBorder(),
-          elevation: 4,
-          child: const Icon(Icons.add, color: Colors.white, size: 28),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        bottomNavigationBar: const BottomNavbar(activeIndex: 0),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildGreetingSection(),
-                _buildMainBanner(),
-                _buildHistoryHeader(),
-                _buildHistorySection(),
-                _buildDailyTarget(),
-                const SizedBox(height: 100),
-              ],
+      child: BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthInitial) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (route) => false,
+            );
+          }
+          if (state is AuthFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+        },
+        child: Scaffold(
+          backgroundColor: const Color(0xFFE8FAF2),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => Navigator.pushNamed(context, '/create-rangkuman'),
+            backgroundColor: const Color(0xFF006947),
+            shape: const CircleBorder(),
+            elevation: 4,
+            child: const Icon(Icons.add, color: Colors.white, size: 28),
+          ),
+          floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+          bottomNavigationBar: const BottomNavbar(activeIndex: 0),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildGreetingSection(),
+                  _buildMainBanner(),
+                  _buildHistoryHeader(),
+                  _buildHistorySection(),
+                  _buildDailyTarget(),
+                  const SizedBox(height: 100),
+                ],
+              ),
             ),
           ),
         ),
@@ -141,11 +157,7 @@ class HomeScreenState extends State<HomeScreen> {
           TextButton(
             onPressed: () {
               context.read<AuthBloc>().add(const LogoutRequested());
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/login',
-                (route) => false,
-              );
+              Navigator.pop(context);
             },
             child: const Text('Logout', style: TextStyle(color: Colors.red)),
           ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leksika/core/di/injection_container.dart';
+import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:leksika/features/auth/presentation/bloc/auth_event.dart';
 import 'package:leksika/features/profile/domain/entities/profile_entity.dart';
 import 'package:leksika/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:leksika/features/profile/presentation/bloc/profile_event.dart';
@@ -151,7 +153,7 @@ class _SetelanView extends StatelessWidget {
                   label: 'Log Out',
                   backgroundColor: const Color(0xFFD32F2F),
                   textColor: Colors.white,
-                  onPressed: () {},
+                  onPressed: () => _confirmLogout(context),
                 ),
 
                 const SizedBox(height: 16),
@@ -159,6 +161,34 @@ class _SetelanView extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Apakah Anda yakin ingin keluar?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.read<AuthBloc>().add(const LogoutRequested());
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/login',
+                (route) => false,
+              );
+            },
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
     );
   }
