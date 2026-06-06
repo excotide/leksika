@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:leksika/core/navigation/app_navigator.dart';
 
@@ -22,6 +23,7 @@ class FcmNotificationService {
   Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
+    if (kIsWeb) return;
 
     await FirebaseMessaging.instance.requestPermission(
       alert: true,
@@ -40,6 +42,7 @@ class FcmNotificationService {
   }
 
   Future<void> registerCurrentToken() async {
+    if (kIsWeb) return;
     final token = await FirebaseMessaging.instance.getToken();
     if (token != null && token.isNotEmpty) {
       await _sendTokenToBackend(token);
@@ -47,6 +50,7 @@ class FcmNotificationService {
   }
 
   Future<void> unregisterCurrentToken() async {
+    if (kIsWeb) return;
     final token = await FirebaseMessaging.instance.getToken();
     if (token == null || token.isEmpty) return;
 
