@@ -119,6 +119,8 @@ class _OtpScreenState extends State<OtpScreen> {
       listener: (context, state) {
         if (state is OtpVerified) {
           Navigator.pushReplacementNamed(context, '/home');
+        } else if (state is Authenticated) {
+          Navigator.pushReplacementNamed(context, '/home');
         } else if (state is OtpResent) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

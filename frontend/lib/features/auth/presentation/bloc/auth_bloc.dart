@@ -82,9 +82,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthLoading());
     final result = await verifyOtpUsecase(VerifyOtpParams(otp: event.otp));
-    result.fold(
-      (failure) => emit(_mapFailureToState(failure)),
-      (_) => emit(const OtpVerified()),
+    await result.fold(
+      (failure) async => emit(_mapFailureToState(failure)),
+      (_) async {
+        final userResult = await getUserUsecase();
+        userResult.fold(
+          (_) => emit(const OtpVerified()),
+          (user) => emit(Authenticated(user)),
+        );
+      },
     );
   }
 

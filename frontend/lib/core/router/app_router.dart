@@ -39,22 +39,22 @@ class AppRouter {
         return SmoothPageRoute(page: const OnboardingScreen());
       case '/login':
         return SmoothPageRoute(
-          page: BlocProvider(
-            create: (_) => sl<AuthBloc>(),
+          page: BlocProvider.value(
+            value: sl<AuthBloc>(),
             child: const LoginScreen(),
           ),
         );
       case '/register':
         return SmoothPageRoute(
-          page: BlocProvider(
-            create: (_) => sl<AuthBloc>(),
+          page: BlocProvider.value(
+            value: sl<AuthBloc>(),
             child: const RegisterScreen(),
           ),
         );
       case '/otp':
         return SmoothPageRoute(
-          page: BlocProvider(
-            create: (_) => sl<AuthBloc>(),
+          page: BlocProvider.value(
+            value: sl<AuthBloc>(),
             child: const OtpScreen(),
           ),
         );

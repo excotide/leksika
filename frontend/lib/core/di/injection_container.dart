@@ -85,7 +85,7 @@ Future<void> init() async {
       () => GoogleLoginUsecase(sl<AuthRepository>()),
     )
 
-    ..registerFactory<AuthBloc>(
+    ..registerLazySingleton<AuthBloc>(
       () => AuthBloc(
         loginUsecase: sl<LoginUsecase>(),
         registerUsecase: sl<RegisterUsecase>(),

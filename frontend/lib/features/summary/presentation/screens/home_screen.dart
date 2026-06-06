@@ -180,10 +180,21 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 2),
-          BlocBuilder<AuthBloc, AuthState>(
-            builder: (context, state) {
+          BlocBuilder<ProfileBloc, ProfileState>(
+            builder: (context, profileState) {
+              final authState = context.watch<AuthBloc>().state;
               String name = 'Pelajar';
-              if (state is Authenticated) name = state.user.name;
+              if (profileState is ProfileLoaded) {
+                name = profileState.profile.name;
+              } else if (profileState is ProfileSubmitting) {
+                name = profileState.profile.name;
+              } else if (profileState is ProfileUpdated) {
+                name = profileState.profile.name;
+              } else if (profileState is ProfilePhotoUpdated) {
+                name = profileState.profile.name;
+              } else if (authState is Authenticated) {
+                name = authState.user.name;
+              }
               return Text(
                 name.toUpperCase(),
                 style: const TextStyle(

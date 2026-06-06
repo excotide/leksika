@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:leksika/features/auth/presentation/bloc/auth_state.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,7 +21,12 @@ class _SplashScreenState extends State<SplashScreen> {
     Timer(const Duration(seconds: 3), () {
       if (mounted) setState(() => isSecondSplash = true);
       Timer(const Duration(seconds: 3), () {
-        if (mounted) Navigator.pushReplacementNamed(context, '/onboarding');
+        if (!mounted) return;
+        final authState = context.read<AuthBloc>().state;
+        Navigator.pushReplacementNamed(
+          context,
+          authState is Authenticated ? '/home' : '/onboarding',
+        );
       });
     });
   }

@@ -15,9 +15,11 @@ class LeksikaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Membungkus MaterialApp dengan BlocProvider global
-    return BlocProvider(
+    final authBloc = sl<AuthBloc>()..add(const FetchUserRequested());
+
+    return BlocProvider.value(
       // Fetch user dilakukan satu kali saat aplikasi pertama kali dijalankan
-      create: (context) => sl<AuthBloc>()..add(const FetchUserRequested()),
+      value: authBloc,
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is Authenticated) {
