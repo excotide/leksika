@@ -41,8 +41,9 @@ class NotificationScreen extends StatefulWidget {
 
 class _NotificationScreenState extends State<NotificationScreen> {
   static const Color _primaryGreen  = Color(0xFF1A7A4A);
-  static const Color _bgColor       = Color(0xFFD8FFF0); // ✅ hijau sesuai Figma
-  static const Color _unreadCardBg  = Color(0xFFB8F0D8); // ✅ kartu unread lebih hijau
+  static const Color _appBarGreen   = Color(0xFF006947);
+  static const Color _bgColor       = Color(0xFFD8FFF0);
+  static const Color _unreadCardBg  = Color(0xFFB8F0D8);
   static const Color _readCardBg    = Colors.white;
   static const Color _tipsCardColor = Color(0xFF1A7A4A);
   static const Color _leftBorder    = Color(0xFF1A7A4A);
@@ -178,34 +179,34 @@ class _NotificationScreenState extends State<NotificationScreen> {
           return Scaffold(
             backgroundColor: _bgColor,
             appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1A1A1A), size: 20),
-          onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            } else {
-              Navigator.pushReplacementNamed(context, '/home');
-            }
-          },
-        ),
-        title: const Text(
-          'Notifikasi',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A)),
-        ),
-        centerTitle: true,
-        actions: [
-          if (items.isNotEmpty && !allRead)
-            TextButton(
-              onPressed: () => _markAllRead(context),
-              child: const Text(
-                'Tandai dibaca',
-                style: TextStyle(color: _primaryGreen, fontSize: 13, fontWeight: FontWeight.w500),
+              backgroundColor: _appBarGreen,
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+                onPressed: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else {
+                    Navigator.pushReplacementNamed(context, '/home');
+                  }
+                },
               ),
-          ),
-        ],
-      ),
+              title: const Text(
+                'Notifikasi',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              centerTitle: true,
+              actions: [
+                if (items.isNotEmpty && !allRead)
+                  TextButton(
+                    onPressed: () => _markAllRead(context),
+                    child: const Text(
+                      'Tandai dibaca',
+                      style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+              ],
+            ),
             body: state is NotificationLoading
                 ? const Center(
                     child: CircularProgressIndicator(color: _primaryGreen),
@@ -213,23 +214,23 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 : items.isEmpty
                     ? _buildEmptyState()
                     : ListView(
-              padding: const EdgeInsets.only(bottom: 32),
-              children: [
-                if (todayNotifs.isNotEmpty) ...[
-                  _buildSectionHeader('Hari Ini', unreadCount: unreadTodayCount),
-                  ...todayNotifs.map((n) => _buildNotifCard(context, n)),
-                ],
-                if (yesterdayNotifs.isNotEmpty) ...[
-                  _buildSectionHeader('Kemarin'),
-                  ...yesterdayNotifs.map((n) => _buildNotifCard(context, n)),
-                ],
-                if (olderNotifs.isNotEmpty) ...[
-                  _buildSectionHeader('Sebelumnya'),
-                  ...olderNotifs.map((n) => _buildNotifCard(context, n)),
-                ],
-                if (allRead) _buildAllReadFooter(),
-              ],
-            ),
+                        padding: const EdgeInsets.only(bottom: 32),
+                        children: [
+                          if (todayNotifs.isNotEmpty) ...[
+                            _buildSectionHeader('Hari Ini', unreadCount: unreadTodayCount),
+                            ...todayNotifs.map((n) => _buildNotifCard(context, n)),
+                          ],
+                          if (yesterdayNotifs.isNotEmpty) ...[
+                            _buildSectionHeader('Kemarin'),
+                            ...yesterdayNotifs.map((n) => _buildNotifCard(context, n)),
+                          ],
+                          if (olderNotifs.isNotEmpty) ...[
+                            _buildSectionHeader('Sebelumnya'),
+                            ...olderNotifs.map((n) => _buildNotifCard(context, n)),
+                          ],
+                          if (allRead) _buildAllReadFooter(),
+                        ],
+                      ),
           );
         },
       ),

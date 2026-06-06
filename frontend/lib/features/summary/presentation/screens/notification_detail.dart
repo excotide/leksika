@@ -16,6 +16,7 @@ class NotificationDetailScreen extends StatefulWidget {
 
 class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
   static const Color _primaryGreen = Color(0xFF1A7A4A);
+  static const Color _appBarGreen  = Color(0xFF006947);
   static const Color _bgColor = Color(0xFFD8FFF0);
 
   bool _isOpening = false;
@@ -27,12 +28,12 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
     return Scaffold(
       backgroundColor: _bgColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: _appBarGreen,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new,
-            color: Color(0xFF1A1A1A),
+            color: Colors.white,
             size: 20,
           ),
           onPressed: () {
@@ -48,7 +49,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1A1A1A),
+            color: Colors.white,
           ),
         ),
         centerTitle: true,
