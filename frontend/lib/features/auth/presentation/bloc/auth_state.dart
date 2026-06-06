@@ -65,3 +65,18 @@ class GoogleLoginFailure extends AuthState {
   final String message;
   const GoogleLoginFailure(this.message);
 }
+
+class ForgotOtpSent extends AuthState {
+  const ForgotOtpSent();
+}
+
+class ForgotOtpVerified extends AuthState {
+  const ForgotOtpVerified(this.resetToken);
+  final String resetToken;
+  @override
+  List<Object?> get props => [resetToken];
+}
+
+class PasswordResetSuccess extends AuthState {
+  const PasswordResetSuccess();
+}

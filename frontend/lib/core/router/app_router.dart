@@ -9,6 +9,8 @@ import 'package:leksika/features/auth/presentation/screens/otp_screen.dart';
 import 'package:leksika/features/auth/presentation/screens/register_screen.dart';
 import 'package:leksika/features/auth/presentation/screens/splash_screen.dart';
 import 'package:leksika/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:leksika/features/auth/presentation/screens/forgot_otp_screen.dart';
+import 'package:leksika/features/auth/presentation/screens/new_password_screen.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:leksika/features/summary/domain/entities/document_entity.dart';
 import 'package:leksika/features/summary/domain/entities/notification_entity.dart';
@@ -52,14 +54,43 @@ class AppRouter {
           ),
         );
       case '/otp':
+        final otpArgs = settings.arguments as Map<String, dynamic>? ?? {};
         return SmoothPageRoute(
           page: BlocProvider.value(
             value: sl<AuthBloc>(),
-            child: const OtpScreen(),
+            child: OtpScreen(
+              email: otpArgs['email'] as String? ?? '',
+            ),
           ),
         );
       case '/forgot-password':
-        return SmoothPageRoute(page: const ForgotPasswordScreen());
+        return SmoothPageRoute(
+          page: BlocProvider.value(
+            value: sl<AuthBloc>(),
+            child: const ForgotPasswordScreen(),
+          ),
+        );
+      case '/forgot-otp':
+        final forgotArgs = settings.arguments as Map<String, dynamic>? ?? {};
+        return SmoothPageRoute(
+          page: BlocProvider.value(
+            value: sl<AuthBloc>(),
+            child: ForgotOtpScreen(
+              email: forgotArgs['email'] as String? ?? '',
+            ),
+          ),
+        );
+      case '/new-password':
+        final newPassArgs = settings.arguments as Map<String, dynamic>? ?? {};
+        return SmoothPageRoute(
+          page: BlocProvider.value(
+            value: sl<AuthBloc>(),
+            child: NewPasswordScreen(
+              email: newPassArgs['email'] as String? ?? '',
+              resetToken: newPassArgs['reset_token'] as String? ?? '',
+            ),
+          ),
+        );
       case '/home':
         return FadeRoute(page: const HomeScreen(), settings: settings);
       case '/notifikasi':

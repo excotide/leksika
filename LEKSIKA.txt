@@ -1,0 +1,271 @@
+============================================================
+         LEKSIKA - APLIKASI ASISTEN BELAJAR BERBASIS AI
+============================================================
+
+Nama Proyek  : Leksika
+Jenis        : Aplikasi Mobile (Android)
+Semester     : 4
+Platform     : Flutter (Frontend) + Laravel (Backend)
+Basis Data   : PostgreSQL
+AI Engine    : Groq API (Model: Llama 3.1 8B Instant)
+Notifikasi   : Firebase Cloud Messaging (FCM)
+
+
+------------------------------------------------------------
+1. DESKRIPSI SINGKAT
+------------------------------------------------------------
+
+Leksika adalah aplikasi mobile berbasis AI yang membantu
+mahasiswa dalam memahami materi perkuliahan. Pengguna dapat
+mengunggah dokumen (PDF, DOCX, atau TXT), lalu aplikasi
+akan secara otomatis menghasilkan rangkuman dan kuis dari
+isi dokumen tersebut menggunakan model bahasa besar (LLM)
+dari Groq AI.
+
+Leksika dirancang sebagai alat bantu belajar mandiri yang
+efisien, menggabungkan fitur rangkuman cerdas, kuis adaptif,
+pengingat belajar, dan pelacakan streak harian.
+
+
+------------------------------------------------------------
+2. ARSITEKTUR PROYEK
+------------------------------------------------------------
+
+Proyek ini terdiri dari dua bagian utama:
+
+  leksika/
+  ├── backend/     -> REST API berbasis Laravel 12 (PHP)
+  └── frontend/    -> Aplikasi Flutter (Dart)
+
+Backend berperan sebagai server yang menyimpan data,
+memproses dokumen, berkomunikasi dengan Groq AI, dan
+mengirim notifikasi. Frontend adalah antarmuka pengguna
+yang berjalan di perangkat Android.
+
+Komunikasi antara frontend dan backend menggunakan HTTP
+REST API dengan autentikasi Bearer Token (Laravel Sanctum).
+
+
+------------------------------------------------------------
+3. TEKNOLOGI YANG DIGUNAKAN
+------------------------------------------------------------
+
+BACKEND:
+  - PHP 8.2+
+  - Laravel 12 (framework utama)
+  - Laravel Sanctum (autentikasi token)
+  - PostgreSQL (database)
+  - Groq API / Llama 3.1 8B (AI summarization & quiz)
+  - Firebase Admin SDK (push notification via FCM)
+  - Resend (layanan pengiriman email OTP)
+  - Poppler / pdftotext (ekstraksi teks dari PDF)
+  - PhpWord (parsing file DOCX)
+  - Laravel Queue (antrian tugas asinkron)
+
+FRONTEND:
+  - Flutter / Dart
+  - BLoC (state management)
+  - Dio (HTTP client)
+  - Go Router (navigasi)
+  - Get It (dependency injection)
+  - Flutter Secure Storage (penyimpanan token aman)
+  - Firebase Messaging (penerimaan notifikasi push)
+  - Google Sign-In (login dengan akun Google)
+  - Flutter Markdown (render hasil rangkuman)
+  - File Picker (pilih dokumen dari perangkat)
+
+
+------------------------------------------------------------
+4. FITUR UTAMA
+------------------------------------------------------------
+
+4.1 AUTENTIKASI
+    - Register dengan email dan password
+    - Login email & password
+    - Login dengan Google (OAuth)
+    - Verifikasi email via OTP 6 digit (dikirim ke email)
+    - Resend OTP jika belum diterima
+    - Logout
+
+4.2 MANAJEMEN DOKUMEN
+    - Upload dokumen: PDF, DOCX, atau TXT (maks. 20 MB)
+    - Ekstraksi teks otomatis dari dokumen yang diunggah
+    - Daftar semua dokumen milik pengguna
+    - Detail dokumen per ID
+
+4.3 RANGKUMAN AI (SUMMARY)
+    - Dokumen yang diunggah dirangkum otomatis oleh AI
+    - Panjang rangkuman dapat dipilih (pendek/sedang/panjang)
+    - Rangkuman ditampilkan dalam format Markdown
+
+4.4 KUIS AI
+    - Kuis soal pilihan ganda dibuat otomatis dari dokumen
+    - Jumlah soal dapat dipilih pengguna
+    - Fitur dapat diaktifkan/nonaktifkan saat upload
+
+4.5 FLASHCARD & STREAK
+    - Sistem flashcard untuk belajar ulang
+    - Pengingat belajar (reminder) dikirim via notifikasi push
+    - Streak harian: pelacak konsistensi belajar pengguna
+
+4.6 PROFIL PENGGUNA
+    - Tampilkan dan edit nama, bio, institusi, alamat
+    - Upload foto profil (JPEG/PNG, maks. 5 MB)
+    - Lihat total rangkuman dan total streak
+
+4.7 NOTIFIKASI
+    - Daftar semua notifikasi pengguna
+    - Tandai notifikasi sebagai sudah dibaca
+    - Pengingat kuis terjadwal via Firebase FCM
+
+
+------------------------------------------------------------
+5. ALUR PENGGUNAAN APLIKASI
+------------------------------------------------------------
+
+  1. Pengguna membuka aplikasi Leksika di HP.
+  2. Daftar akun atau login (email/password atau Google).
+  3. Verifikasi email menggunakan OTP yang dikirim ke email.
+  4. Di halaman utama, pengguna memilih dokumen dari HP.
+  5. Pilih panjang rangkuman dan apakah ingin membuat kuis.
+  6. Upload dokumen -> backend memproses dan memanggil Groq AI.
+  7. Hasil rangkuman muncul dalam format teks terformat (Markdown).
+  8. Pengguna dapat mengerjakan kuis dari dokumen yang sama.
+  9. Notifikasi pengingat dikirim untuk mendorong belajar rutin.
+  10. Streak harian bertambah setiap hari pengguna aktif belajar.
+
+
+------------------------------------------------------------
+6. STRUKTUR ENDPOINT API
+------------------------------------------------------------
+
+BASE URL: http://<host>:8000/api
+
+  PUBLIC (tanpa login):
+    POST /register               -> Daftar akun baru
+    POST /login                  -> Login
+    POST /auth/google            -> Login dengan Google
+
+  SEMI-PROTECTED (login, belum verifikasi email):
+    POST /email/verify-otp       -> Verifikasi OTP
+    POST /email/resend-otp       -> Kirim ulang OTP
+
+  PROTECTED (login + email terverifikasi):
+    POST   /logout               -> Logout
+    GET    /user                 -> Info user aktif
+    GET    /profile              -> Profil pengguna
+    PUT    /profile              -> Update profil
+    POST   /profile/photo        -> Upload foto profil
+    GET    /documents            -> Daftar dokumen
+    POST   /documents            -> Upload & proses dokumen
+    GET    /documents/{id}       -> Detail dokumen
+    GET    /notifications        -> Daftar notifikasi
+    PUT    /notifications/read-all -> Tandai semua dibaca
+    PUT    /notifications/{id}/read -> Tandai satu dibaca
+    POST   /fcm-token            -> Daftarkan token FCM
+    DELETE /fcm-token            -> Hapus token FCM
+    GET    /user/streak          -> Data streak pengguna
+
+
+------------------------------------------------------------
+7. CARA MENJALANKAN PROYEK
+------------------------------------------------------------
+
+BACKEND (Laravel):
+  1. Masuk ke folder: cd backend
+  2. Install dependency: composer install
+  3. Salin file env: cp .env.example .env
+  4. Isi konfigurasi di .env:
+       - DB_CONNECTION=pgsql, DB_DATABASE=leksika, dst.
+       - GROQ_API_KEY=<api key dari groq.com>
+       - FIREBASE_PROJECT_ID dan FIREBASE_CREDENTIALS
+       - PDFTOTEXT_BINARY=pdftotext (install Poppler dulu)
+  5. Generate key: php artisan key:generate
+  6. Jalankan migrasi: php artisan migrate
+  7. Bersihkan cache: php artisan config:clear
+  8. Jalankan server: php artisan serve --host=0.0.0.0
+  9. Jalankan queue (terminal terpisah): php artisan queue:work
+
+  Catatan: Install Poppler di Windows dengan:
+    winget install oschwartz10612.Poppler
+
+FRONTEND (Flutter):
+  1. Masuk ke folder: cd frontend
+  2. Install dependency: flutter pub get
+  3. Letakkan google-services.json di:
+       frontend/android/app/google-services.json
+  4. Cari IP laptop: ipconfig (ambil IPv4 Wi-Fi)
+  5. Jalankan dengan perintah:
+       flutter run --dart-define=API_BASE_URL=http://IP_LAPTOP:8000/api
+
+  Untuk emulator Android:
+       flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api
+
+
+------------------------------------------------------------
+8. KEBUTUHAN SISTEM
+------------------------------------------------------------
+
+  - PHP 8.2 atau lebih baru
+  - Composer
+  - PostgreSQL (database bernama "leksika")
+  - Poppler (pdftotext) untuk parsing PDF
+  - Node.js + npm (untuk aset frontend Laravel)
+  - Flutter SDK 3.x / Dart SDK ^3.10
+  - Android device atau emulator
+  - Akun Groq API (untuk AI summarization)
+  - Akun Firebase (untuk notifikasi push)
+  - Akun Resend (untuk pengiriman email OTP)
+
+
+------------------------------------------------------------
+9. CATATAN PENTING
+------------------------------------------------------------
+
+  - File-file berikut TIDAK boleh di-commit ke Git:
+      backend/.env
+      backend/storage/app/firebase-service-account.json
+      frontend/android/app/google-services.json
+
+  - AI summarization menggunakan model Llama 3.1 8B Instant
+    dari Groq dengan batasan 12.000 karakter per permintaan.
+
+  - Untuk dokumen PDF hasil scan/gambar, teks tidak dapat
+    diekstrak secara otomatis (butuh OCR seperti Tesseract).
+
+  - Backend perlu dua terminal saat berjalan:
+      Terminal 1: php artisan serve --host=0.0.0.0
+      Terminal 2: php artisan queue:work
+
+  - HP dan laptop harus berada di jaringan Wi-Fi yang sama
+    saat menjalankan aplikasi di perangkat fisik.
+
+
+------------------------------------------------------------
+10. ALUR GIT (KONTRIBUSI TIM)
+------------------------------------------------------------
+
+  1. Selalu pull sebelum mulai kerja:
+       git pull origin main
+
+  2. Buat branch baru untuk setiap fitur:
+       git checkout -b fitur/nama-fitur
+
+  3. Setelah selesai, push branch:
+       git add .
+       git commit -m "pesan commit"
+       git push origin fitur/nama-fitur
+
+  4. Buat Pull Request ke branch main.
+
+  Struktur folder fitur (frontend):
+    features/
+    ├── auth/        <- login, register, OTP
+    ├── document/    <- upload & daftar dokumen
+    ├── summary/     <- rangkuman & kuis
+    └── profile/     <- profil pengguna
+
+
+============================================================
+                     LEKSIKA - SMT 4
+============================================================

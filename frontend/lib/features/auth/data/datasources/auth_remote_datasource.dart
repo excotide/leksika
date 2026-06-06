@@ -21,6 +21,17 @@ abstract class AuthRemoteDataSource {
   Future<void> logout();
 
   Future<UserModel> loginWithGoogle(String idToken);
+
+  Future<void> sendForgotOtp({required String email});
+
+  Future<String> verifyForgotOtp({required String email, required String otp});
+
+  Future<void> resetPassword({
+    required String email,
+    required String resetToken,
+    required String password,
+    required String passwordConfirmation,
+  });
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -152,6 +163,51 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         data: {'id_token': idToken},
       );
       return UserModel.fromAuthResponse(response.data as Map<String, dynamic>);
+    } on DioException catch (error) {
+      _handleDioError(error);
+    }
+  }
+
+  @override
+  Future<void> sendForgotOtp({required String email}) async {
+    try {
+      await dio.post('/password/forgot', data: {'email': email});
+    } on DioException catch (error) {
+      _handleDioError(error);
+    }
+  }
+
+  @override
+  Future<String> verifyForgotOtp({
+    required String email,
+    required String otp,
+  }) async {
+    try {
+      final response = await dio.post(
+        '/password/verify-otp',
+        data: {'email': email, 'otp': otp},
+      );
+      final data = response.data as Map<String, dynamic>;
+      return data['reset_token'] as String;
+    } on DioException catch (error) {
+      _handleDioError(error);
+    }
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String resetToken,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    try {
+      await dio.post('/password/reset', data: {
+        'email': email,
+        'reset_token': resetToken,
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+      });
     } on DioException catch (error) {
       _handleDioError(error);
     }

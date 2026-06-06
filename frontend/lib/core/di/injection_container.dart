@@ -14,6 +14,9 @@ import 'package:leksika/features/auth/domain/usecases/register_usecase.dart';
 import 'package:leksika/features/auth/domain/usecases/resend_otp_usecase.dart';
 import 'package:leksika/features/auth/domain/usecases/verify_otp_usecase.dart';
 import 'package:leksika/features/auth/domain/usecases/logout_usecase.dart';
+import 'package:leksika/features/auth/domain/usecases/send_forgot_otp_usecase.dart';
+import 'package:leksika/features/auth/domain/usecases/verify_forgot_otp_usecase.dart';
+import 'package:leksika/features/auth/domain/usecases/reset_password_usecase.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:leksika/features/summary/data/datasources/summary_remote_datasource.dart';
 import 'package:leksika/features/summary/data/datasources/notification_remote_datasource.dart';
@@ -84,6 +87,15 @@ Future<void> init() async {
     ..registerLazySingleton<GoogleLoginUsecase>(
       () => GoogleLoginUsecase(sl<AuthRepository>()),
     )
+    ..registerLazySingleton<SendForgotOtpUsecase>(
+      () => SendForgotOtpUsecase(sl<AuthRepository>()),
+    )
+    ..registerLazySingleton<VerifyForgotOtpUsecase>(
+      () => VerifyForgotOtpUsecase(sl<AuthRepository>()),
+    )
+    ..registerLazySingleton<ResetPasswordUsecase>(
+      () => ResetPasswordUsecase(sl<AuthRepository>()),
+    )
 
     ..registerLazySingleton<AuthBloc>(
       () => AuthBloc(
@@ -94,6 +106,9 @@ Future<void> init() async {
         getUserUsecase: sl<GetUserUsecase>(),
         logoutUsecase: sl<LogoutUsecase>(),
         googleLoginUsecase: sl<GoogleLoginUsecase>(),
+        sendForgotOtpUsecase: sl<SendForgotOtpUsecase>(),
+        verifyForgotOtpUsecase: sl<VerifyForgotOtpUsecase>(),
+        resetPasswordUsecase: sl<ResetPasswordUsecase>(),
       ),
     );
 

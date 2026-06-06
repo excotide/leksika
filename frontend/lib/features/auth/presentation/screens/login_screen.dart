@@ -57,13 +57,21 @@ class _LoginScreenState extends State<LoginScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message)),
           );
-          Navigator.pushNamed(context, '/otp');
+          Navigator.pushNamed(
+            context,
+            '/otp',
+            arguments: {'email': _emailController.text.trim()},
+          );
         }
         if (state is Authenticated) {
           if (state.user.isEmailVerified) {
             Navigator.pushReplacementNamed(context, '/home');
           } else {
-            Navigator.pushNamed(context, '/otp');
+            Navigator.pushNamed(
+              context,
+              '/otp',
+              arguments: {'email': state.user.email},
+            );
           }
         }
       },

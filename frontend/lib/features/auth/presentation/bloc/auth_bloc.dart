@@ -5,6 +5,9 @@ import 'package:leksika/features/auth/domain/usecases/login_usecase.dart';
 import 'package:leksika/features/auth/domain/usecases/register_usecase.dart';
 import 'package:leksika/features/auth/domain/usecases/resend_otp_usecase.dart';
 import 'package:leksika/features/auth/domain/usecases/verify_otp_usecase.dart';
+import 'package:leksika/features/auth/domain/usecases/send_forgot_otp_usecase.dart';
+import 'package:leksika/features/auth/domain/usecases/verify_forgot_otp_usecase.dart';
+import 'package:leksika/features/auth/domain/usecases/reset_password_usecase.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_event.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_state.dart';
 import 'package:leksika/features/auth/domain/usecases/logout_usecase.dart';
@@ -18,7 +21,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.resendOtpUsecase,
     required this.getUserUsecase,
     required this.logoutUsecase,
-    required this.googleLoginUsecase
+    required this.googleLoginUsecase,
+    required this.sendForgotOtpUsecase,
+    required this.verifyForgotOtpUsecase,
+    required this.resetPasswordUsecase,
   }) : super(const AuthInitial()) {
     on<LoginRequested>(_onLoginRequested);
     on<RegisterRequested>(_onRegisterRequested);
@@ -27,6 +33,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<FetchUserRequested>(_onFetchUser);
     on<LogoutRequested>(_onLogoutRequested);
     on<GoogleLoginRequested>(_onGoogleLoginRequested);
+    on<SendForgotOtpRequested>(_onSendForgotOtp);
+    on<VerifyForgotOtpRequested>(_onVerifyForgotOtp);
+    on<ResetPasswordRequested>(_onResetPassword);
   }
 
   final LoginUsecase loginUsecase;
@@ -36,6 +45,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final GetUserUsecase getUserUsecase;
   final LogoutUsecase logoutUsecase;
   final GoogleLoginUsecase googleLoginUsecase;
+  final SendForgotOtpUsecase sendForgotOtpUsecase;
+  final VerifyForgotOtpUsecase verifyForgotOtpUsecase;
+  final ResetPasswordUsecase resetPasswordUsecase;
 
   Future<void> _onLoginRequested(
     LoginRequested event,
@@ -154,6 +166,51 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     result.fold(
       (failure) => emit(_mapFailureToState(failure)),
       (user) => emit(Authenticated(user)),
+    );
+  }
+
+  Future<void> _onSendForgotOtp(
+    SendForgotOtpRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    final result = await sendForgotOtpUsecase(event.email);
+    result.fold(
+      (failure) => emit(AuthFailure(failure.message)),
+      (_) => emit(const ForgotOtpSent()),
+    );
+  }
+
+  Future<void> _onVerifyForgotOtp(
+    VerifyForgotOtpRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    final result = await verifyForgotOtpUsecase(
+      VerifyForgotOtpParams(email: event.email, otp: event.otp),
+    );
+    result.fold(
+      (failure) => emit(AuthFailure(failure.message)),
+      (resetToken) => emit(ForgotOtpVerified(resetToken)),
+    );
+  }
+
+  Future<void> _onResetPassword(
+    ResetPasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    final result = await resetPasswordUsecase(
+      ResetPasswordParams(
+        email: event.email,
+        resetToken: event.resetToken,
+        password: event.password,
+        passwordConfirmation: event.passwordConfirmation,
+      ),
+    );
+    result.fold(
+      (failure) => emit(AuthFailure(failure.message)),
+      (_) => emit(const PasswordResetSuccess()),
     );
   }
 }

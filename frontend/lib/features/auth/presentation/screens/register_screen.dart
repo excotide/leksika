@@ -72,13 +72,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message)),
           );
-          Navigator.pushReplacementNamed(context, '/otp');
+          Navigator.pushReplacementNamed(
+            context,
+            '/otp',
+            arguments: {'email': _emailController.text.trim()},
+          );
         }
         if (state is Authenticated) {
           if (state.user.isEmailVerified) {
             Navigator.pushReplacementNamed(context, '/home');
           } else {
-            Navigator.pushReplacementNamed(context, '/otp');
+            Navigator.pushReplacementNamed(
+              context,
+              '/otp',
+              arguments: {'email': state.user.email},
+            );
           }
         }
       },

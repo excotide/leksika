@@ -6,16 +6,16 @@ import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_event.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_state.dart';
 
-class OtpScreen extends StatefulWidget {
-  const OtpScreen({super.key, required this.email});
+class ForgotOtpScreen extends StatefulWidget {
+  const ForgotOtpScreen({super.key, required this.email});
 
   final String email;
 
   @override
-  State<OtpScreen> createState() => _OtpScreenState();
+  State<ForgotOtpScreen> createState() => _ForgotOtpScreenState();
 }
 
-class _OtpScreenState extends State<OtpScreen> {
+class _ForgotOtpScreenState extends State<ForgotOtpScreen> {
   static const int _otpLength = 6;
   static const Color _green = Color(0xFF2D6A4F);
   static const Color _greenLight = Color(0xFFD8FFF0);
@@ -26,11 +26,9 @@ class _OtpScreenState extends State<OtpScreen> {
   final List<FocusNode> _focusNodes =
       List.generate(_otpLength, (_) => FocusNode());
 
-  String get _otpValue =>
-      _controllers.map((c) => c.text).join();
+  String get _otpValue => _controllers.map((c) => c.text).join();
 
-  // Countdown timer
-  int _secondsLeft = 30;
+  int _secondsLeft = 60;
   Timer? _timer;
   bool _canResend = false;
 
@@ -43,7 +41,7 @@ class _OtpScreenState extends State<OtpScreen> {
   void _startTimer() {
     _timer?.cancel();
     setState(() {
-      _secondsLeft = 30;
+      _secondsLeft = 60;
       _canResend = false;
     });
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
@@ -62,12 +60,8 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    for (final c in _controllers) {
-      c.dispose();
-    }
-    for (final f in _focusNodes) {
-      f.dispose();
-    }
+    for (final c in _controllers) { c.dispose(); }
+    for (final f in _focusNodes) { f.dispose(); }
     super.dispose();
   }
 
@@ -91,9 +85,7 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   void _clearBoxes() {
-    for (final c in _controllers) {
-      c.clear();
-    }
+    for (final c in _controllers) { c.clear(); }
     _focusNodes[0].requestFocus();
     setState(() {});
   }
@@ -101,14 +93,14 @@ class _OtpScreenState extends State<OtpScreen> {
   void _verify() {
     if (_otpValue.length == _otpLength) {
       context.read<AuthBloc>().add(
-            VerifyOtpRequested(otp: _otpValue),
+            VerifyForgotOtpRequested(email: widget.email, otp: _otpValue),
           );
     }
   }
 
   void _resend() {
     if (_canResend) {
-      context.read<AuthBloc>().add(ResendOtpRequested());
+      context.read<AuthBloc>().add(SendForgotOtpRequested(widget.email));
       _startTimer();
     }
   }
@@ -117,11 +109,13 @@ class _OtpScreenState extends State<OtpScreen> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is OtpVerified) {
-          Navigator.pushReplacementNamed(context, '/home');
-        } else if (state is Authenticated) {
-          Navigator.pushReplacementNamed(context, '/home');
-        } else if (state is OtpResent) {
+        if (state is ForgotOtpVerified) {
+          Navigator.pushNamed(
+            context,
+            '/new-password',
+            arguments: {'email': widget.email, 'reset_token': state.resetToken},
+          );
+        } else if (state is ForgotOtpSent) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Kode OTP baru telah dikirim ke email kamu'),
@@ -144,9 +138,7 @@ class _OtpScreenState extends State<OtpScreen> {
           backgroundColor: _greenLight,
           elevation: 0,
           leading: GestureDetector(
-            onTap: () {
-              if (Navigator.canPop(context)) Navigator.pop(context);
-            },
+            onTap: () { if (Navigator.canPop(context)) Navigator.pop(context); },
             child: Container(
               margin: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
               decoration: BoxDecoration(
@@ -165,7 +157,7 @@ class _OtpScreenState extends State<OtpScreen> {
             ),
           ),
           title: const Text(
-            'Verifikasi',
+            'Reset Password',
             style: TextStyle(
               color: _green,
               fontWeight: FontWeight.w700,
@@ -183,8 +175,6 @@ class _OtpScreenState extends State<OtpScreen> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 24),
-
-                  // Illustration / Icon area
                   Container(
                     width: 100,
                     height: 100,
@@ -199,12 +189,10 @@ class _OtpScreenState extends State<OtpScreen> {
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.mark_email_read_outlined,
+                    child: const Icon(Icons.lock_reset_rounded,
                         size: 50, color: _green),
                   ),
-
                   const SizedBox(height: 28),
-
                   const Text(
                     'Masukkan Kode OTP',
                     style: TextStyle(
@@ -215,7 +203,7 @@ class _OtpScreenState extends State<OtpScreen> {
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    'Kami telah mengirimkan kode verifikasi 6 digit ke:',
+                    'Kode reset password 6 digit telah dikirim ke:',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -224,15 +212,14 @@ class _OtpScreenState extends State<OtpScreen> {
                     ),
                   ),
                   const SizedBox(height: 6),
-
-                  // Email chip
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: _greenMid.withValues(alpha: 0.4)),
+                      border: Border.all(
+                          color: _greenMid.withValues(alpha: 0.4)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -241,7 +228,7 @@ class _OtpScreenState extends State<OtpScreen> {
                             size: 16, color: _green),
                         const SizedBox(width: 8),
                         Text(
-                          widget.email.isNotEmpty ? widget.email : '',
+                          widget.email.isNotEmpty ? widget.email : 'email@kamu.com',
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -251,16 +238,7 @@ class _OtpScreenState extends State<OtpScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Jika email di atas tidak sesuai, kembali dan perbaiki.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
-                  ),
-
                   const SizedBox(height: 36),
-
-                  // OTP boxes
                   LayoutBuilder(
                     builder: (context, constraints) {
                       const spacing = 8.0;
@@ -318,10 +296,7 @@ class _OtpScreenState extends State<OtpScreen> {
                       );
                     },
                   ),
-
                   const SizedBox(height: 36),
-
-                  // Verify button
                   SizedBox(
                     width: double.infinity,
                     height: 54,
@@ -331,7 +306,8 @@ class _OtpScreenState extends State<OtpScreen> {
                           : _verify,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _green,
-                        disabledBackgroundColor: _greenMid.withValues(alpha: 0.4),
+                        disabledBackgroundColor:
+                            _greenMid.withValues(alpha: 0.4),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -351,7 +327,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                     color: Colors.white, size: 22),
                                 SizedBox(width: 10),
                                 Text(
-                                  'Verifikasi',
+                                  'Verifikasi OTP',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 16,
@@ -362,16 +338,13 @@ class _OtpScreenState extends State<OtpScreen> {
                             ),
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
-                  // Resend section
                   Column(
                     children: [
                       const Text(
                         'Belum menerima kode?',
-                        style:
-                            TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                        style: TextStyle(
+                            fontSize: 14, color: Color(0xFF6B7280)),
                       ),
                       const SizedBox(height: 6),
                       GestureDetector(
@@ -392,7 +365,6 @@ class _OtpScreenState extends State<OtpScreen> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 40),
                 ],
               ),

@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\PasswordResetController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -12,6 +13,12 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/auth/google', [AuthController::class, 'loginWithGoogle']);
+
+Route::prefix('password')->group(function () {
+    Route::post('/forgot',       [PasswordResetController::class, 'sendOtp']);
+    Route::post('/verify-otp',   [PasswordResetController::class, 'verifyOtp']);
+    Route::post('/reset',        [PasswordResetController::class, 'reset']);
+});
 
 // Routes OTP (Butuh Login, Belum Perlu Verified)
 Route::middleware('auth:sanctum')->group(function () {

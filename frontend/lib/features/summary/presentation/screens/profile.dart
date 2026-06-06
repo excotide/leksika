@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leksika/core/di/injection_container.dart';
+import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:leksika/features/auth/presentation/bloc/auth_event.dart';
 import 'package:leksika/features/profile/domain/entities/profile_entity.dart';
 import 'package:leksika/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:leksika/features/profile/presentation/bloc/profile_event.dart';
@@ -21,6 +23,33 @@ class SetelanPage extends StatelessWidget {
 
 class _SetelanView extends StatelessWidget {
   const _SetelanView();
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Apakah Anda yakin ingin keluar?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () {
+              context.read<AuthBloc>().add(const LogoutRequested());
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/login',
+                (route) => false,
+              );
+            },
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +180,7 @@ class _SetelanView extends StatelessWidget {
                   label: 'Log Out',
                   backgroundColor: const Color(0xFFD32F2F),
                   textColor: Colors.white,
-                  onPressed: () {},
+                  onPressed: () => _showLogoutDialog(context),
                 ),
 
                 const SizedBox(height: 16),

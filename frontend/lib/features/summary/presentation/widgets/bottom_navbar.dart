@@ -11,16 +11,14 @@ class BottomNavbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8,
-        color: Colors.white,
-        elevation: 10,
-        child: SizedBox(
-          height: 64,
-          child: Row(
+    return BottomAppBar(
+      shape: const CircularNotchedRectangle(),
+      notchMargin: 8,
+      color: Colors.white,
+      elevation: 10,
+      child: SizedBox(
+        height: 64,
+        child: Row(
             children: [
               Expanded(
                 child: Row(
@@ -76,9 +74,10 @@ class BottomNavbar extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
+
+
 
   Widget _navItem(
     BuildContext context,
