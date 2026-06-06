@@ -86,12 +86,15 @@ class _SetelanView extends StatelessWidget {
         ),
       ),
 
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.pushNamed(context, '/create-rangkuman'),
-        backgroundColor: const Color(0xFF006947),
-        shape: const CircleBorder(),
-        elevation: 4,
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
+      floatingActionButton: Transform.translate(
+        offset: const Offset(0, 8),
+        child: FloatingActionButton(
+          onPressed: () => Navigator.pushNamed(context, '/create-rangkuman'),
+          backgroundColor: const Color(0xFF006947),
+          shape: const CircleBorder(),
+          elevation: 4,
+          child: const Icon(Icons.add, color: Colors.white, size: 28),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: const BottomNavbar(activeIndex: 3),
@@ -180,7 +183,11 @@ class _SetelanView extends StatelessWidget {
                   label: 'Log Out',
                   backgroundColor: const Color(0xFFD32F2F),
                   textColor: Colors.white,
+<<<<<<< HEAD
                   onPressed: () => _showLogoutDialog(context),
+=======
+                  onPressed: () => _confirmLogout(context),
+>>>>>>> ebf3fed3db44e525ce9de2bb77c0acf6ea1d16e7
                 ),
 
                 const SizedBox(height: 16),
@@ -188,6 +195,34 @@ class _SetelanView extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Apakah Anda yakin ingin keluar?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.read<AuthBloc>().add(const LogoutRequested());
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/login',
+                (route) => false,
+              );
+            },
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
     );
   }

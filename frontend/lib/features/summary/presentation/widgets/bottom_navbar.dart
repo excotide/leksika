@@ -11,14 +11,16 @@ class BottomNavbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 8,
-      color: Colors.white,
-      elevation: 10,
-      child: SizedBox(
-        height: 64,
-        child: Row(
+    return SafeArea(
+      top: false,
+      child: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 8,
+        color: Colors.white,
+        elevation: 10,
+        child: SizedBox(
+          height: 64,
+          child: Row(
             children: [
               Expanded(
                 child: Row(
@@ -74,7 +76,8 @@ class BottomNavbar extends StatelessWidget {
             ],
           ),
         ),
-      );
+      ),
+    );
   }
 
 
@@ -94,7 +97,7 @@ class BottomNavbar extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
-        height: 56,
+        height: 62,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
