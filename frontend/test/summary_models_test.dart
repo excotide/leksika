@@ -44,7 +44,8 @@ void main() {
       expect(notification.id, 3);
       expect(notification.documentId, 7);
       expect(notification.title, 'Rangkuman Siap!');
-      expect(notification.message, contains('materi-vpn.pdf'));
+      expect(notification.message, contains('Materi Vpn'));
+      expect(notification.message, isNot(contains('.pdf')));
       expect(notification.type, 'summary_success');
       expect(notification.isRead, isFalse);
     });

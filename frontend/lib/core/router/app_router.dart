@@ -11,10 +11,12 @@ import 'package:leksika/features/auth/presentation/screens/splash_screen.dart';
 import 'package:leksika/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:leksika/features/summary/domain/entities/document_entity.dart';
+import 'package:leksika/features/summary/domain/entities/notification_entity.dart';
 import 'package:leksika/features/summary/presentation/screens/create_rangkuman_screen.dart';
 import 'package:leksika/features/summary/presentation/screens/detail_screen.dart';
 import 'package:leksika/features/summary/presentation/screens/home_screen.dart';
 import 'package:leksika/features/summary/presentation/screens/notification.dart'; // ← tambahan
+import 'package:leksika/features/summary/presentation/screens/notification_detail.dart';
 import 'package:leksika/features/summary/presentation/screens/riwayat_screen.dart';
 import 'package:leksika/features/summary/presentation/screens/summary_screen.dart';
 import 'package:leksika/features/summary/presentation/screens/flashcard.dart';
@@ -62,6 +64,14 @@ class AppRouter {
         return FadeRoute(page: const HomeScreen(), settings: settings);
       case '/notifikasi':
         return SmoothPageRoute(page: const NotificationScreen());
+      case '/notification-detail':
+        return SmoothPageRoute(
+          page: settings.arguments is NotificationEntity
+              ? NotificationDetailScreen(
+                  notification: settings.arguments as NotificationEntity,
+                )
+              : const PlaceholderScreen(title: 'Notifikasi tidak ditemukan'),
+        );
       case '/riwayat':
         return FadeRoute(page: const RiwayatScreen(), settings: settings);
       case '/create-rangkuman':

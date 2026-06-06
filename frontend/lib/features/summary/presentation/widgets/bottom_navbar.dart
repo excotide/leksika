@@ -11,38 +11,70 @@ class BottomNavbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 8,
-      color: Colors.white,
-      elevation: 10,
-      child: SizedBox(
-        height: 60,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                _navItem(context, Icons.home_rounded, 'BERANDA', activeIndex == 0,
-                    '/home'),
-                _navItem(
-                  context,
-                  Icons.description_outlined,
-                  'RIWAYAT',
-                  activeIndex == 1,
-                  '/riwayat',
+    return SafeArea(
+      top: false,
+      child: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 8,
+        color: Colors.white,
+        elevation: 10,
+        child: SizedBox(
+          height: 72,
+          child: Row(
+            children: [
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Expanded(
+                      child: _navItem(
+                        context,
+                        Icons.home_rounded,
+                        'BERANDA',
+                        activeIndex == 0,
+                        '/home',
+                      ),
+                    ),
+                    Expanded(
+                      child: _navItem(
+                        context,
+                        Icons.description_outlined,
+                        'RIWAYAT',
+                        activeIndex == 1,
+                        '/riwayat',
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            Row(
-              children: [
-                _navItem(context, Icons.style_outlined, 'FLASHCARD',
-                    activeIndex == 2, '/flashcard'),
-                _navItem(context, Icons.person_outline_rounded, 'PROFIL',
-                    activeIndex == 3, '/profil'),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(width: 72),
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Expanded(
+                      child: _navItem(
+                        context,
+                        Icons.style_outlined,
+                        'FLASHCARD',
+                        activeIndex == 2,
+                        '/flashcard',
+                      ),
+                    ),
+                    Expanded(
+                      child: _navItem(
+                        context,
+                        Icons.person_outline_rounded,
+                        'PROFIL',
+                        activeIndex == 3,
+                        '/profil',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -63,7 +95,7 @@ class BottomNavbar extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+        padding: const EdgeInsets.symmetric(vertical: 6),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -89,8 +121,10 @@ class BottomNavbar extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 9,
+                fontSize: 8,
                 fontWeight: FontWeight.bold,
                 color: isActive
                     ? const Color(0xFF064E3B)

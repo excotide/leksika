@@ -204,9 +204,27 @@ class SummaryDetailScreen extends StatelessWidget {
           ),
           const Divider(color: Color(0xFFB7EDD9), height: 24),
           MarkdownBody(
-            data: body,
+            data: _normalizeMarkdownForDisplay(body),
             selectable: true,
             styleSheet: MarkdownStyleSheet(
+              h1: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF00362A),
+                height: 1.35,
+              ),
+              h2: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF00362A),
+                height: 1.35,
+              ),
+              h3: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF00362A),
+                height: 1.35,
+              ),
               p: const TextStyle(
                 fontSize: 15,
                 color: Color(0xFF2F6555),
@@ -226,5 +244,34 @@ class SummaryDetailScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _normalizeMarkdownForDisplay(String value) {
+    final normalizedLines = value
+        .split('\n')
+        .map((line) {
+          var cleaned = line.trimRight();
+
+          cleaned = cleaned.replaceFirstMapped(
+            RegExp(r'^\s*[-*]\s+\*\*(.+)\*\*\s*$'),
+            (match) => '**${match.group(1)?.trim()}**',
+          );
+          cleaned = cleaned.replaceFirstMapped(
+            RegExp(r'^\s*\*\s+(.+):\*\*\s*$'),
+            (match) => '**${match.group(1)?.trim()}:**',
+          );
+          cleaned = cleaned.replaceFirstMapped(
+            RegExp(r'^\s*\*\s+(.+)\*\*\s*$'),
+            (match) => '**${match.group(1)?.trim()}**',
+          );
+
+          if (cleaned.trim() == '*') return '';
+          return cleaned;
+        })
+        .join('\n');
+
+    return normalizedLines
+        .replaceAll(RegExp(r'\n{3,}'), '\n\n')
+        .trim();
   }
 }

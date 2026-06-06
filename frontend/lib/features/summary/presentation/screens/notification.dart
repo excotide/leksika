@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leksika/core/di/injection_container.dart';
-import 'package:leksika/features/summary/domain/entities/document_entity.dart';
 import 'package:leksika/features/summary/domain/entities/notification_entity.dart';
-import 'package:leksika/features/summary/domain/usecases/get_summary_usecase.dart';
 import 'package:leksika/features/summary/presentation/bloc/notification_bloc.dart';
 import 'package:leksika/features/summary/presentation/bloc/notification_event.dart';
 import 'package:leksika/features/summary/presentation/bloc/notification_state.dart';
@@ -16,6 +14,7 @@ class NotificationItem {
   final String time;
   final NotifType type;
   final DateTime? createdAt;
+  final NotificationEntity source;
   bool isRead;
 
   NotificationItem({
@@ -25,6 +24,7 @@ class NotificationItem {
     required this.body,
     required this.time,
     required this.type,
+    required this.source,
     this.createdAt,
     this.isRead = false,
   });
@@ -60,6 +60,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             time: _formatTime(notification.createdAt),
             type: _typeFromBackend(notification.type),
             createdAt: notification.createdAt,
+            source: notification,
             isRead: notification.isRead,
           ),
         )
@@ -144,83 +145,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   void _openNotificationDetail(BuildContext context, NotificationItem item) {
     _markOneRead(context, item);
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(item.title),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(item.body),
-            const SizedBox(height: 12),
-            Text(
-              item.time.isEmpty ? 'Baru saja' : item.time,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Tutup'),
-          ),
-          if (item.documentId != null)
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-                _openRelatedDocument(context, item);
-              },
-              child: Text(
-                item.type == NotifType.motivasi
-                    ? 'Buka Flashcard'
-                    : 'Buka Rangkuman',
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _openRelatedDocument(
-    BuildContext context,
-    NotificationItem item,
-  ) async {
-    final document = await _loadDocument(item.documentId!);
-    if (!mounted) return;
-
-    if (document == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Materi terkait belum bisa dibuka. Coba lagi nanti.')),
-      );
-      return;
-    }
-
-    if (item.type == NotifType.motivasi && document.flashcards.isNotEmpty) {
-      Navigator.pushNamed(context, '/isi-flashcard', arguments: document);
-      return;
-    }
-
     Navigator.pushNamed(
       context,
-      '/detail',
-      arguments: {
-        'title': document.title.isEmpty ? 'Rangkuman' : document.title,
-        'pageCount': 'Ringkasan',
-        'contents': [
-          {'subTitle': 'Ringkasan', 'body': document.summary},
-        ],
-        'document': document,
-      },
+      '/notification-detail',
+      arguments: item.source,
     );
-  }
-
-  Future<DocumentEntity?> _loadDocument(int documentId) async {
-    final result = await sl<GetDocumentDetailUsecase>()(
-      GetDocumentDetailParams(id: documentId),
-    );
-    return result.fold((_) => null, (document) => document);
   }
 
   @override

@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_event.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_state.dart';
+import 'package:leksika/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:leksika/features/profile/presentation/bloc/profile_event.dart';
+import 'package:leksika/features/profile/presentation/bloc/profile_state.dart';
 import 'package:leksika/features/summary/domain/entities/document_entity.dart';
 import 'package:leksika/features/summary/presentation/bloc/summary_bloc.dart';
 import 'package:leksika/features/summary/presentation/bloc/summary_event.dart';
@@ -19,51 +22,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> {
-  // Logika Menghitung Streak Harian berturut-turut
-  int _calculateDailyStreak(List<DocumentEntity> documents) {
-    if (documents.isEmpty) return 0;
-
-    // Ambil semua tanggal unik saat user merangkum (hanya tanggal, tanpa jam)
-    final dates =
-        documents
-            .where((doc) => doc.createdAt != null)
-            .map(
-              (doc) => DateTime(
-                doc.createdAt!.year,
-                doc.createdAt!.month,
-                doc.createdAt!.day,
-              ),
-            )
-            .toSet()
-            .toList()
-          ..sort((a, b) => b.compareTo(a)); // Urutkan dari yang terbaru
-
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
-
-    // Jika tidak ada aktivitas hari ini DAN kemarin, streak putus (0)
-    if (!dates.contains(today) && !dates.contains(yesterday)) {
-      return 0;
-    }
-
-    int streak = 0;
-    // Mulai pengecekan dari hari ini (jika ada) atau kemarin
-    DateTime checkDate = dates.contains(today) ? today : yesterday;
-
-    // Loop mundur untuk mengecek kesinambungan hari
-    while (dates.contains(checkDate)) {
-      streak++;
-      checkDate = checkDate.subtract(const Duration(days: 1));
-    }
-
-    return streak;
-  }
-
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<SummaryBloc>()..add(const FetchDocumentsRequested()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => sl<SummaryBloc>()..add(const FetchDocumentsRequested()),
+        ),
+        BlocProvider(
+          create: (_) => sl<ProfileBloc>()..add(const LoadProfile()),
+        ),
+      ],
       child: Scaffold(
         backgroundColor: const Color(0xFFE8FAF2),
         floatingActionButton: FloatingActionButton(
@@ -234,83 +203,94 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStreakBadge() {
-    return BlocBuilder<SummaryBloc, SummaryState>(
-      builder: (context, state) {
-        int dayStreak = 0;
-        bool isAlreadyActiveToday = false;
+    return BlocBuilder<ProfileBloc, ProfileState>(
+      builder: (context, profileState) {
+        final dayStreak = _streakFromProfileState(profileState);
 
-        if (state is SummaryListLoaded) {
-          dayStreak = _calculateDailyStreak(state.documents);
+        return BlocBuilder<SummaryBloc, SummaryState>(
+          builder: (context, summaryState) {
+            bool isAlreadyActiveToday = false;
 
-          // Cek apakah hari ini sudah ada aktivitas
-          final now = DateTime.now();
-          final today = DateTime(now.year, now.month, now.day);
-          isAlreadyActiveToday = state.documents.any(
-            (doc) =>
-                doc.createdAt != null &&
-                DateTime(
-                      doc.createdAt!.year,
-                      doc.createdAt!.month,
-                      doc.createdAt!.day,
-                    ) ==
-                    today,
-          );
-        }
+            if (summaryState is SummaryListLoaded) {
+              // Cek apakah hari ini sudah ada aktivitas
+              final now = DateTime.now();
+              final today = DateTime(now.year, now.month, now.day);
+              isAlreadyActiveToday = summaryState.documents.any(
+                (doc) =>
+                    doc.createdAt != null &&
+                    DateTime(
+                          doc.createdAt!.year,
+                          doc.createdAt!.month,
+                          doc.createdAt!.day,
+                        ) ==
+                        today,
+              );
+            }
 
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.18),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  // Berwarna orange menyala jika user sudah aktif hari ini
-                  color: isAlreadyActiveToday
-                      ? const Color(0xFFF5A623)
-                      : Colors.grey.shade400,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.local_fire_department,
-                  color: Colors.white,
-                  size: 20,
-                ),
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(14),
               ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'STREAK HARIAN',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      // Berwarna orange menyala jika user sudah aktif hari ini
+                      color: isAlreadyActiveToday
+                          ? const Color(0xFFF5A623)
+                          : Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.local_fire_department,
+                      color: Colors.white,
+                      size: 20,
                     ),
                   ),
-                  Text(
-                    dayStreak > 0
-                        ? '$dayStreak Hari Berturut-turut!'
-                        : 'Mulai streak harimu!',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'STREAK HARIAN',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        dayStreak > 0
+                            ? '$dayStreak Hari Berturut-turut!'
+                            : 'Mulai streak harimu!',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
+  }
+
+  int _streakFromProfileState(ProfileState state) {
+    if (state is ProfileLoaded) return state.profile.totalStreak;
+    if (state is ProfileSubmitting) return state.profile.totalStreak;
+    if (state is ProfileUpdated) return state.profile.totalStreak;
+    if (state is ProfilePhotoUpdated) return state.profile.totalStreak;
+    return 0;
   }
 
   Widget _buildHistorySection() {
