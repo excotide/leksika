@@ -71,6 +71,6 @@ class SummaryBloc extends Bloc<SummaryEvent, SummaryState> {
     if (failure is UnauthorizedFailure) {
       return 'Unauthorized. Please login again.';
     }
-    return 'Something went wrong. Please try again.';
+    return failure.message;
   }
 }

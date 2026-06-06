@@ -19,8 +19,8 @@ class SummaryRepositoryImpl implements SummaryRepository {
       return Left(EmailNotVerifiedFailure());
     } on UnauthorizedException {
       return Left(UnauthorizedFailure());
-    } on ServerException {
-      return Left(ServerFailure());
+    } on ServerException catch (error) {
+      return Left(ServerFailure(error.message));
     }
   }
 
@@ -33,8 +33,8 @@ class SummaryRepositoryImpl implements SummaryRepository {
       return Left(EmailNotVerifiedFailure());
     } on UnauthorizedException {
       return Left(UnauthorizedFailure());
-    } on ServerException {
-      return Left(ServerFailure());
+    } on ServerException catch (error) {
+      return Left(ServerFailure(error.message));
     }
   }
 
@@ -57,8 +57,8 @@ class SummaryRepositoryImpl implements SummaryRepository {
       return Left(EmailNotVerifiedFailure());
     } on UnauthorizedException {
       return Left(UnauthorizedFailure());
-    } on ServerException {
-      return Left(ServerFailure());
+    } on ServerException catch (error) {
+      return Left(ServerFailure(error.message));
     }
   }
 }

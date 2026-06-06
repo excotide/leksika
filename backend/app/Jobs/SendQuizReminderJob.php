@@ -1,6 +1,5 @@
 <?php
 
-namespace App\Models\Notification;
 namespace App\Jobs;
 
 use App\Models\Notification;

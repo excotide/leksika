@@ -62,8 +62,8 @@ class SummaryRemoteDataSourceImpl implements SummaryRemoteDataSource {
           filename: file.uri.pathSegments.last,
         ),
         'length': ?length,
-        'makeQuiz': ?makeQuiz,
-        'quizCount': ?quizCount,
+        'make_quiz': ?_normalizeBooleanString(makeQuiz),
+        'quiz_count': ?quizCount,
       });
       final response = await dio.post(
         '/documents',
@@ -89,6 +89,48 @@ class SummaryRemoteDataSourceImpl implements SummaryRemoteDataSource {
     if (statusCode == 403) {
       throw EmailNotVerifiedException();
     }
-    throw ServerException();
+    throw ServerException(
+      message: _extractMessage(error) ?? _fallbackMessage(error),
+      statusCode: statusCode,
+    );
+  }
+
+  String? _normalizeBooleanString(String? value) {
+    if (value == null) return null;
+    final normalized = value.toLowerCase().trim();
+    if (normalized == 'ya' || normalized == 'true' || normalized == '1') {
+      return 'true';
+    }
+    return 'false';
+  }
+
+  String? _extractMessage(DioException error) {
+    final data = error.response?.data;
+    if (data is Map<String, dynamic>) {
+      final message = data['message'];
+      if (message is String && message.isNotEmpty) return message;
+
+      final errors = data['errors'];
+      if (errors is Map) {
+        for (final value in errors.values) {
+          if (value is List && value.isNotEmpty) return value.first.toString();
+          if (value is String && value.isNotEmpty) return value;
+        }
+      }
+    }
+    return null;
+  }
+
+  String _fallbackMessage(DioException error) {
+    switch (error.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return 'Koneksi ke backend terlalu lama. Pastikan server Laravel menyala dan jaringan stabil.';
+      case DioExceptionType.connectionError:
+        return 'Tidak bisa terhubung ke backend. Periksa IP backend, Wi-Fi, dan server Laravel.';
+      default:
+        return 'Terjadi kesalahan saat memproses dokumen. Silakan coba lagi.';
+    }
   }
 }

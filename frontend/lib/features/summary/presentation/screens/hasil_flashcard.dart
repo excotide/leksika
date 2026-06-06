@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:leksika/features/summary/domain/entities/document_entity.dart';
 
 // ============================================================
 // PRESENTATION LAYER — Clean Architecture
@@ -17,6 +18,10 @@ class FlashcardResultPage extends StatelessWidget {
     final score = args?['score'] as int? ?? 0;
     final sudahMengerti = args?['sudahMengerti'] as int? ?? 0;
     final belumMengerti = args?['belumMengerti'] as int? ?? 0;
+    final topicName = args?['topicName'] as String? ?? 'Flashcard';
+    final document = args?['document'] is DocumentEntity
+        ? args!['document'] as DocumentEntity
+        : null;
 
     return Scaffold(
       backgroundColor: const Color(0xFFE8F5EE),
@@ -88,7 +93,7 @@ class FlashcardResultPage extends StatelessWidget {
               children: [
                 // 1. Header: "SESI SELESAI" + nama topik + jumlah kartu
                 _SessionHeader(
-                  topicName: 'Virtual Private Network',
+                  topicName: topicName,
                   totalCards: totalCards,
                 ),
 
@@ -105,7 +110,11 @@ class FlashcardResultPage extends StatelessWidget {
 
                 // 3. Tombol aksi: Ulangi & Selesai
                 _BottomActions(
-                  onUlangi: () => Navigator.pushReplacementNamed(context, '/isi-flashcard'),
+                  onUlangi: () => Navigator.pushReplacementNamed(
+                    context,
+                    '/isi-flashcard',
+                    arguments: document,
+                  ),
                   onSelesai: () => Navigator.pushNamedAndRemoveUntil(
                     context,
                     '/flashcard',

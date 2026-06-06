@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:leksika/core/di/injection_container.dart';
+import 'package:leksika/features/summary/domain/entities/notification_entity.dart';
+import 'package:leksika/features/summary/presentation/bloc/notification_bloc.dart';
+import 'package:leksika/features/summary/presentation/bloc/notification_event.dart';
+import 'package:leksika/features/summary/presentation/bloc/notification_state.dart';
 
 class NotificationItem {
-  final String id;
+  final int id;
   final String title;
   final String body;
   final String time;
   final NotifType type;
+  final DateTime? createdAt;
   bool isRead;
 
   NotificationItem({
@@ -14,6 +21,7 @@ class NotificationItem {
     required this.body,
     required this.time,
     required this.type,
+    this.createdAt,
     this.isRead = false,
   });
 }
@@ -35,73 +43,126 @@ class _NotificationScreenState extends State<NotificationScreen> {
   static const Color _tipsCardColor = Color(0xFF1A7A4A);
   static const Color _leftBorder    = Color(0xFF1A7A4A);
 
-  final List<NotificationItem> _todayNotifs = [
-    NotificationItem(
-      id: '1',
-      title: 'Rangkuman Siap!',
-      body: 'Rangkuman Struktur Data & Algoritma sudah siap dipelajari. Yuk, cek sekarang!',
-      time: '09:41',
-      type: NotifType.rangkuman,
-      isRead: false,
-    ),
-    NotificationItem(
-      id: '2',
-      title: 'Hebat!',
-      body: 'Wah, streak kamu sudah 7 hari! Pertahankan semangat belajarmu hari ini.',
-      time: '07:20',
-      type: NotifType.motivasi,
-      isRead: false,
-    ),
-  ];
-
-  final List<NotificationItem> _yesterdayNotifs = [
-    NotificationItem(
-      id: '3',
-      title: 'Update Fitur',
-      body: 'Cek fitur baru Leksika sekarang! Kamu bisa menambahkan catatan suara ke dalam perpustakaan belajarmu.',
-      time: 'Kemarin',
-      type: NotifType.update,
-      isRead: true,
-    ),
-    NotificationItem(
-      id: '4',
-      title: 'Tips Belajar Hari Ini',
-      body: 'Ulangi materi yang baru dipelajari dalam 24 jam untuk meningkatkan retensi hingga 80%.',
-      time: 'Kemarin',
-      type: NotifType.tips,
-      isRead: true,
-    ),
-    NotificationItem(
-      id: '5',
-      title: 'Keamanan',
-      body: 'Password akun kamu berhasil diperbarui. Jika bukan kamu, segera hubungi tim support kami.',
-      time: 'Kemarin',
-      type: NotifType.keamanan,
-      isRead: true,
-    ),
-  ];
-
-  List<NotificationItem> get _allNotifs => [..._todayNotifs, ..._yesterdayNotifs];
-  bool get _allRead => _allNotifs.every((n) => n.isRead);
-  int get _unreadTodayCount => _todayNotifs.where((n) => !n.isRead).length;
-
-  void _markAllRead() {
-    setState(() {
-      for (final n in _allNotifs) {
-        n.isRead = true;
-      }
-    });
+  List<NotificationItem> _itemsFromEntities(
+    List<NotificationEntity> notifications,
+  ) {
+    return notifications
+        .map(
+          (notification) => NotificationItem(
+            id: notification.id,
+            title: notification.title,
+            body: notification.message,
+            time: _formatTime(notification.createdAt),
+            type: _typeFromBackend(notification.type),
+            createdAt: notification.createdAt,
+            isRead: notification.isRead,
+          ),
+        )
+        .toList();
   }
 
-  void _markOneRead(NotificationItem item) {
-    if (!item.isRead) setState(() => item.isRead = true);
+  List<NotificationItem> _todayItems(List<NotificationItem> items) {
+    return items.where((item) => _isSameDay(item.createdAt, DateTime.now())).toList();
+  }
+
+  List<NotificationItem> _yesterdayItems(List<NotificationItem> items) {
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    return items.where((item) => _isSameDay(item.createdAt, yesterday)).toList();
+  }
+
+  List<NotificationItem> _olderItems(List<NotificationItem> items) {
+    final today = DateTime.now();
+    final yesterday = today.subtract(const Duration(days: 1));
+    return items
+        .where(
+          (item) =>
+              !_isSameDay(item.createdAt, today) &&
+              !_isSameDay(item.createdAt, yesterday),
+        )
+        .toList();
+  }
+
+  bool _isSameDay(DateTime? value, DateTime target) {
+    if (value == null) return false;
+    final local = value.toLocal();
+    return local.year == target.year &&
+        local.month == target.month &&
+        local.day == target.day;
+  }
+
+  String _formatTime(DateTime? value) {
+    if (value == null) return '';
+    final local = value.toLocal();
+    final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(days: 1));
+    if (_isSameDay(local, now)) {
+      final hour = local.hour.toString().padLeft(2, '0');
+      final minute = local.minute.toString().padLeft(2, '0');
+      return '$hour:$minute';
+    }
+    if (_isSameDay(local, yesterday)) return 'Kemarin';
+    return '${local.day}/${local.month}/${local.year}';
+  }
+
+  NotifType _typeFromBackend(String type) {
+    switch (type) {
+      case 'summary_success':
+        return NotifType.rangkuman;
+      case 'quiz_reminder':
+        return NotifType.motivasi;
+      case 'tips':
+        return NotifType.tips;
+      case 'security':
+        return NotifType.keamanan;
+      default:
+        return NotifType.update;
+    }
+  }
+
+  bool _allRead(List<NotificationItem> items) {
+    return items.every((n) => n.isRead);
+  }
+
+  void _markAllRead(BuildContext context) {
+    context
+        .read<NotificationBloc>()
+        .add(const MarkAllNotificationsReadRequested());
+  }
+
+  void _markOneRead(BuildContext context, NotificationItem item) {
+    if (!item.isRead) {
+      context
+          .read<NotificationBloc>()
+          .add(MarkNotificationReadRequested(item.id));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _bgColor,
-      appBar: AppBar(
+    return BlocProvider(
+      create: (_) =>
+          sl<NotificationBloc>()..add(const FetchNotificationsRequested()),
+      child: BlocConsumer<NotificationBloc, NotificationState>(
+        listener: (context, state) {
+          if (state is NotificationFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+        },
+        builder: (context, state) {
+          final items = state is NotificationLoaded
+              ? _itemsFromEntities(state.notifications)
+              : <NotificationItem>[];
+          final todayNotifs = _todayItems(items);
+          final yesterdayNotifs = _yesterdayItems(items);
+          final olderNotifs = _olderItems(items);
+          final allRead = _allRead(items);
+          final unreadTodayCount = todayNotifs.where((n) => !n.isRead).length;
+
+          return Scaffold(
+            backgroundColor: _bgColor,
+            appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
@@ -120,32 +181,43 @@ class _NotificationScreenState extends State<NotificationScreen> {
         ),
         centerTitle: true,
         actions: [
-          if (!_allRead)
+          if (items.isNotEmpty && !allRead)
             TextButton(
-              onPressed: _markAllRead,
+              onPressed: () => _markAllRead(context),
               child: const Text(
                 'Tandai dibaca',
                 style: TextStyle(color: _primaryGreen, fontSize: 13, fontWeight: FontWeight.w500),
               ),
-            ),
+          ),
         ],
       ),
-      body: _allNotifs.isEmpty
-          ? _buildEmptyState()
-          : ListView(
+            body: state is NotificationLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: _primaryGreen),
+                  )
+                : items.isEmpty
+                    ? _buildEmptyState()
+                    : ListView(
               padding: const EdgeInsets.only(bottom: 32),
               children: [
-                if (_todayNotifs.isNotEmpty) ...[
-                  _buildSectionHeader('Hari Ini', unreadCount: _unreadTodayCount),
-                  ..._todayNotifs.map((n) => _buildNotifCard(n)),
+                if (todayNotifs.isNotEmpty) ...[
+                  _buildSectionHeader('Hari Ini', unreadCount: unreadTodayCount),
+                  ...todayNotifs.map((n) => _buildNotifCard(context, n)),
                 ],
-                if (_yesterdayNotifs.isNotEmpty) ...[
+                if (yesterdayNotifs.isNotEmpty) ...[
                   _buildSectionHeader('Kemarin'),
-                  ..._yesterdayNotifs.map((n) => _buildNotifCard(n)),
+                  ...yesterdayNotifs.map((n) => _buildNotifCard(context, n)),
                 ],
-                if (_allRead) _buildAllReadFooter(),
+                if (olderNotifs.isNotEmpty) ...[
+                  _buildSectionHeader('Sebelumnya'),
+                  ...olderNotifs.map((n) => _buildNotifCard(context, n)),
+                ],
+                if (allRead) _buildAllReadFooter(),
               ],
             ),
+          );
+        },
+      ),
     );
   }
 
@@ -185,14 +257,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
     );
   }
 
-  Widget _buildNotifCard(NotificationItem item) {
+  Widget _buildNotifCard(BuildContext context, NotificationItem item) {
     final isTips = item.type == NotifType.tips;
-    if (isTips) return _buildTipsCard(item);
+    if (isTips) return _buildTipsCard(context, item);
 
     final isUnread = !item.isRead;
 
     return GestureDetector(
-      onTap: () => _markOneRead(item),
+      onTap: () => _markOneRead(context, item),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
         decoration: BoxDecoration(
@@ -273,9 +345,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
     );
   }
 
-  Widget _buildTipsCard(NotificationItem item) {
+  Widget _buildTipsCard(BuildContext context, NotificationItem item) {
     return GestureDetector(
-      onTap: () => _markOneRead(item),
+      onTap: () => _markOneRead(context, item),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
         padding: const EdgeInsets.all(18),

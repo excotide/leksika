@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import 'package:leksika/features/summary/presentation/screens/flashcard_dummy_data.dart';
+import 'package:leksika/features/summary/domain/entities/document_entity.dart';
+import 'package:leksika/features/summary/domain/entities/flashcard_entity.dart';
 
 // ============================================================
 // PRESENTATION LAYER — Clean Architecture
@@ -9,8 +10,9 @@ import 'package:leksika/features/summary/presentation/screens/flashcard_dummy_da
 
 class FlashcardDetailPage extends StatefulWidget {
   final Animation<double>? bodyAnimation;
+  final DocumentEntity? document;
 
-  const FlashcardDetailPage({super.key, this.bodyAnimation});
+  const FlashcardDetailPage({super.key, this.bodyAnimation, this.document});
 
   @override
   State<FlashcardDetailPage> createState() => _FlashcardDetailPageState();
@@ -33,6 +35,8 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
   int _sudahMengerti = 0;
   int _belumMengerti = 0;
   bool _hasAnswered = false;
+
+  List<FlashcardEntity> get _flashcards => widget.document?.flashcards ?? const [];
 
   @override
   void initState() {
@@ -71,7 +75,7 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
   }
 
   void _nextCard() {
-    if (_currentIndex < dummyFlashcards.length - 1) {
+    if (_currentIndex < _flashcards.length - 1) {
       setState(() {
         _currentIndex++;
         _isFlipped = false;
@@ -167,13 +171,34 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
   }
 
   Widget _buildBody() {
+    if (_flashcards.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'Flashcard belum tersedia untuk dokumen ini.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Color(0xFF004C31),
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+    }
+
     final anim = widget.bodyAnimation;
+    final currentFlashcard = _flashcards[_currentIndex];
     final body = SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
         child: Column(
           children: [
             // Judul + badge bagian
-            _CardHeader(part: dummyFlashcards[_currentIndex]['part']!),
+            _CardHeader(
+              title: widget.document?.title ?? 'Flashcard',
+              part: '${_currentIndex + 1}',
+            ),
 
             const SizedBox(height: 24),
 
@@ -186,11 +211,12 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
                 child: _FlipCard(
                   animation: _animation,
                   currentCard: _currentIndex + 1,
-                  totalCards: dummyFlashcards.length,
-                  frontChild: _CardFront(question: dummyFlashcards[_currentIndex]['question']!),
+                  totalCards: _flashcards.length,
+                  frontChild: _CardFront(question: currentFlashcard.question),
                   backChild: _CardBack(
-                    answer: dummyFlashcards[_currentIndex]['answer']!,
+                    answer: currentFlashcard.answer,
                     onSudahMengerti: () {
+                      if (_hasAnswered) return;
                       setState(() {
                         _sudahMengerti++;
                         _hasAnswered = true;
@@ -198,6 +224,7 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
                       _nextCard();
                     },
                     onBelumMengerti: () {
+                      if (_hasAnswered) return;
                       setState(() {
                         _belumMengerti++;
                         _hasAnswered = true;
@@ -216,15 +243,17 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
               onBack: _prevCard,
               onNext: _nextCard,
               hasAnswered: _hasAnswered,
-              isLastCard: _currentIndex == dummyFlashcards.length - 1 && _hasAnswered,
+              isLastCard: _currentIndex == _flashcards.length - 1 && _hasAnswered,
               onSelesai: () => Navigator.pushNamed(
                 context,
                 '/hasil-flashcard',
                 arguments: {
-                  'totalCards': dummyFlashcards.length,
+                  'totalCards': _flashcards.length,
                   'sudahMengerti': _sudahMengerti,
                   'belumMengerti': _belumMengerti,
-                  'score': ((_sudahMengerti / dummyFlashcards.length) * 100).round(),
+                  'score': ((_sudahMengerti / _flashcards.length) * 100).round(),
+                  'topicName': widget.document?.title ?? 'Flashcard',
+                  'document': widget.document,
                 },
               ),
             ),
@@ -254,19 +283,20 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
 // Judul flashcard + badge "Bagian 1" di tengah.
 // ============================================================
 class _CardHeader extends StatelessWidget {
+  final String title;
   final String part;
 
-  const _CardHeader({required this.part});
+  const _CardHeader({required this.title, required this.part});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         // Judul bold hijau tua, center
-        const Text(
-          'Virtual Private\nNetwork',
+        Text(
+          title,
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
             color: Color(0xFF004C31),
             fontSize: 24,
             fontWeight: FontWeight.bold,

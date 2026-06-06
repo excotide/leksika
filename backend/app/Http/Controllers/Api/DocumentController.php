@@ -211,6 +211,14 @@ PANDUAN KETAT KONTEN RANGKUMAN:
                 $customMessage = 'Server AI sedang sangat sibuk atau mencapai batas limit harian. Silakan coba beberapa saat lagi.';
                 $statusCode = 503;
             }
+            elseif (Str::contains(strtolower($errorMessage), ['curl error 28', 'resolving timed out', 'could not resolve host', 'name or service not known', 'connection timed out', 'operation timed out'])) {
+                $customMessage = 'Server AI sedang tidak dapat dihubungi. Periksa koneksi internet backend lalu coba lagi.';
+                $statusCode = 503;
+            }
+            elseif (Str::contains(strtolower($errorMessage), ['groq api error', 'groq exception'])) {
+                $customMessage = 'Layanan AI gagal memproses dokumen saat ini. Silakan coba beberapa saat lagi.';
+                $statusCode = 503;
+            }
             elseif (
                 $errorMessage === "File tidak memiliki teks yang cukup untuk dirangkum." || 
                 $errorMessage === "AI gagal menghasilkan output rangkuman yang valid untuk dokumen ini."

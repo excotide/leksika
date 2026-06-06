@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:leksika/core/di/injection_container.dart';
+import 'package:leksika/features/summary/domain/entities/document_entity.dart';
+import 'package:leksika/features/summary/presentation/bloc/summary_bloc.dart';
+import 'package:leksika/features/summary/presentation/bloc/summary_event.dart';
+import 'package:leksika/features/summary/presentation/bloc/summary_state.dart';
 import 'package:leksika/features/summary/presentation/widgets/bottom_navbar.dart';
-import 'package:leksika/features/summary/presentation/screens/flashcard_dummy_data.dart';
 
 // ============================================================
 // PRESENTATION LAYER — Clean Architecture
@@ -9,11 +14,13 @@ import 'package:leksika/features/summary/presentation/screens/flashcard_dummy_da
 
 // Model sederhana untuk data flashcard — normalnya ada di domain layer
 class FlashcardItem {
+  final DocumentEntity document;
   final String fileName;
   final int cardCount;
   final int durationMinutes;
 
   const FlashcardItem({
+    required this.document,
     required this.fileName,
     required this.cardCount,
     required this.durationMinutes,
@@ -23,23 +30,25 @@ class FlashcardItem {
 class FlashcardPage extends StatelessWidget {
   const FlashcardPage({super.key});
 
-  // Data item flashcard dibangun dari dummyFlashcards agar selalu sinkron
-  static List<FlashcardItem> get _items {
-    final topic = dummyFlashcards.first['topic'] ?? 'Flashcard';
-    final cardCount = dummyFlashcards.length;
-    final durationMinutes = (cardCount * 1.5).ceil();
-    return [
-      FlashcardItem(
-        fileName: '$topic.pdf',
-        cardCount: cardCount,
-        durationMinutes: durationMinutes,
-      ),
-    ];
+  List<FlashcardItem> _itemsFromDocuments(List<DocumentEntity> documents) {
+    return documents
+        .where((document) => document.flashcards.isNotEmpty)
+        .map(
+          (document) => FlashcardItem(
+            document: document,
+            fileName: document.title,
+            cardCount: document.flashcards.length,
+            durationMinutes: (document.flashcards.length * 1.5).ceil(),
+          ),
+        )
+        .toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocProvider(
+      create: (_) => sl<SummaryBloc>()..add(const FetchDocumentsRequested()),
+      child: Scaffold(
       backgroundColor: const Color(0xFFE8F5EE),
 
       // ── AppBar melengkung ke bawah ──────────────────────────
@@ -120,29 +129,61 @@ class FlashcardPage extends StatelessWidget {
       ),
 
       // ── Body ──────────────────────────────────────────────────
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.only(
-          top: 24,
-          left: 16,
-          right: 16,
-          bottom: 32,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Subjudul section
-            const _SectionHeader(),
+      body: BlocBuilder<SummaryBloc, SummaryState>(
+        builder: (context, state) {
+          if (state is SummaryLoading) {
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF006947)),
+            );
+          }
 
-            const SizedBox(height: 20),
+          if (state is SummaryFailure) {
+            return _FlashcardMessage(
+              icon: Icons.error_outline,
+              title: 'Gagal memuat flashcard',
+              body: state.message,
+            );
+          }
 
-            // List kartu flashcard
-            ..._items.map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: _FlashcardCard(item: item),
-              ),
+          final documents = state is SummaryListLoaded
+              ? state.documents
+              : <DocumentEntity>[];
+          final items = _itemsFromDocuments(documents);
+
+          if (items.isEmpty) {
+            return const _FlashcardMessage(
+              icon: Icons.style_outlined,
+              title: 'Belum ada flashcard',
+              body: 'Buat rangkuman dengan opsi flashcard untuk mulai belajar.',
+            );
+          }
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.only(
+              top: 24,
+              left: 16,
+              right: 16,
+              bottom: 32,
             ),
-          ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Subjudul section
+                const _SectionHeader(),
+
+                const SizedBox(height: 20),
+
+                // List kartu flashcard
+                ...items.map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _FlashcardCard(item: item),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
         ),
       ),
     );
@@ -204,7 +245,11 @@ class _FlashcardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    void navigate() => Navigator.pushNamed(context, '/isi-flashcard');
+    void navigate() => Navigator.pushNamed(
+          context,
+          '/isi-flashcard',
+          arguments: item.document,
+        );
 
     return Container(
       decoration: BoxDecoration(
@@ -296,6 +341,52 @@ class _FlashcardCard extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FlashcardMessage extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String body;
+
+  const _FlashcardMessage({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: const Color(0xFF004C31), size: 42),
+            const SizedBox(height: 14),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFF121E18),
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              body,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFF3F4943),
+                fontSize: 13,
+              ),
+            ),
+          ],
         ),
       ),
     );

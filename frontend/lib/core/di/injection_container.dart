@@ -15,9 +15,14 @@ import 'package:leksika/features/auth/domain/usecases/verify_otp_usecase.dart';
 import 'package:leksika/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:leksika/features/summary/data/datasources/summary_remote_datasource.dart';
+import 'package:leksika/features/summary/data/datasources/notification_remote_datasource.dart';
+import 'package:leksika/features/summary/data/repositories/notification_repository_impl.dart';
 import 'package:leksika/features/summary/data/repositories/summary_repository_impl.dart';
+import 'package:leksika/features/summary/domain/repositories/notification_repository.dart';
 import 'package:leksika/features/summary/domain/repositories/summary_repository.dart';
+import 'package:leksika/features/summary/domain/usecases/notification_usecases.dart';
 import 'package:leksika/features/summary/domain/usecases/get_summary_usecase.dart';
+import 'package:leksika/features/summary/presentation/bloc/notification_bloc.dart';
 import 'package:leksika/features/summary/presentation/bloc/summary_bloc.dart';
 import 'package:leksika/features/profile/data/datasources/profile_remote_datasource.dart';
 import 'package:leksika/features/profile/data/repositories/profile_repository_impl.dart';
@@ -108,6 +113,29 @@ Future<void> init() async {
         getDocumentsUsecase: sl<GetDocumentsUsecase>(),
         getDocumentDetailUsecase: sl<GetDocumentDetailUsecase>(),
         uploadDocumentUsecase: sl<UploadDocumentUsecase>(),
+      ),
+    )
+    ..registerLazySingleton<NotificationRemoteDataSource>(
+      () => NotificationRemoteDataSourceImpl(sl<Dio>()),
+    )
+    ..registerLazySingleton<NotificationRepository>(
+      () => NotificationRepositoryImpl(sl<NotificationRemoteDataSource>()),
+    )
+    ..registerLazySingleton<GetNotificationsUsecase>(
+      () => GetNotificationsUsecase(sl<NotificationRepository>()),
+    )
+    ..registerLazySingleton<MarkNotificationAsReadUsecase>(
+      () => MarkNotificationAsReadUsecase(sl<NotificationRepository>()),
+    )
+    ..registerLazySingleton<MarkAllNotificationsAsReadUsecase>(
+      () => MarkAllNotificationsAsReadUsecase(sl<NotificationRepository>()),
+    )
+    ..registerFactory<NotificationBloc>(
+      () => NotificationBloc(
+        getNotificationsUsecase: sl<GetNotificationsUsecase>(),
+        markNotificationAsReadUsecase: sl<MarkNotificationAsReadUsecase>(),
+        markAllNotificationsAsReadUsecase:
+            sl<MarkAllNotificationsAsReadUsecase>(),
       ),
     );
 

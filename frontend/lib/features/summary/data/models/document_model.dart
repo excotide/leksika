@@ -1,4 +1,5 @@
 import 'package:leksika/features/summary/domain/entities/document_entity.dart';
+import 'package:leksika/features/summary/data/models/flashcard_model.dart';
 
 class DocumentModel extends DocumentEntity {
   const DocumentModel({
@@ -6,6 +7,7 @@ class DocumentModel extends DocumentEntity {
     required super.title,
     required super.summary,
     required super.createdAt,
+    super.flashcards,
   });
 
   factory DocumentModel.fromJson(Map<String, dynamic> json) {
@@ -18,11 +20,17 @@ class DocumentModel extends DocumentEntity {
       summaryText = json['summary'] as String;
     }
 
+    final flashcards = (json['flashcards'] as List<dynamic>? ?? [])
+        .whereType<Map<String, dynamic>>()
+        .map(FlashcardModel.fromJson)
+        .toList();
+
     return DocumentModel(
       id: (json['id'] as num?)?.toInt() ?? 0,
       title: titleField,
       summary: summaryText,
       createdAt: _parseDate(json['created_at']) ?? DateTime.now(),
+      flashcards: flashcards,
     );
   }
 
@@ -32,6 +40,17 @@ class DocumentModel extends DocumentEntity {
       'title': title,
       'summary': summary,
       'created_at': createdAt?.toIso8601String(),
+      'flashcards': flashcards
+          .map(
+            (flashcard) => {
+              'id': flashcard.id,
+              'document_id': flashcard.documentId,
+              'question': flashcard.question,
+              'answer': flashcard.answer,
+              'created_at': flashcard.createdAt?.toIso8601String(),
+            },
+          )
+          .toList(),
     };
   }
 

@@ -10,6 +10,7 @@ import 'package:leksika/features/auth/presentation/screens/register_screen.dart'
 import 'package:leksika/features/auth/presentation/screens/splash_screen.dart';
 import 'package:leksika/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:leksika/features/summary/domain/entities/document_entity.dart';
 import 'package:leksika/features/summary/presentation/screens/create_rangkuman_screen.dart';
 import 'package:leksika/features/summary/presentation/screens/detail_screen.dart';
 import 'package:leksika/features/summary/presentation/screens/home_screen.dart';
@@ -77,7 +78,12 @@ class AppRouter {
           transitionDuration: const Duration(milliseconds: 300),
           reverseTransitionDuration: const Duration(milliseconds: 300),
           pageBuilder: (context, animation, secondaryAnimation) =>
-              FlashcardDetailPage(bodyAnimation: animation),
+              FlashcardDetailPage(
+                bodyAnimation: animation,
+                document: settings.arguments is DocumentEntity
+                    ? settings.arguments as DocumentEntity
+                    : null,
+              ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) => child,
         );
       case '/hasil-flashcard':

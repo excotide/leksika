@@ -1,9 +1,12 @@
 import 'package:google_sign_in/google_sign_in.dart';
 
 class GoogleAuthService {
+  static const String _webClientId =
+      '372278748604-nt92s4inhiged16m5tpjc8vslvgt4hoj.apps.googleusercontent.com';
+
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
-    clientId: '372278748604-nt92s4inhiged16m5tpjc8vslvgt4hoj.apps.googleusercontent.com',
+    serverClientId: _webClientId,
   );
 
   static Future<String?> getIdToken() async {
