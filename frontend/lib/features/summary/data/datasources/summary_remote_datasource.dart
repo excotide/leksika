@@ -126,9 +126,9 @@ class SummaryRemoteDataSourceImpl implements SummaryRemoteDataSource {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-        return 'Koneksi ke backend terlalu lama. Pastikan server Laravel menyala dan jaringan stabil.';
+        return 'Rangkuman belum bisa dibuat karena koneksi terlalu lama. Silakan coba lagi.';
       case DioExceptionType.connectionError:
-        return 'Tidak bisa terhubung ke backend. Periksa IP backend, Wi-Fi, dan server Laravel.';
+        return 'Aplikasi belum bisa terhubung. Pastikan internet aktif lalu coba lagi.';
       default:
         return 'Terjadi kesalahan saat memproses dokumen. Silakan coba lagi.';
     }

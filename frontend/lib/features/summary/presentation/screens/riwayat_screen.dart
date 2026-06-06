@@ -190,6 +190,7 @@ class RiwayatScreenState extends State<RiwayatScreen> {
             'contents': [
               {'subTitle': 'Hasil Rangkuman', 'body': desc},
             ],
+            'document': doc,
           },
         );
       },

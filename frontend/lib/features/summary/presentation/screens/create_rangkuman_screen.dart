@@ -79,6 +79,7 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
                 'contents': [
                   {'subTitle': 'Ringkasan', 'body': state.document.summary},
                 ],
+                'document': state.document,
               },
             );
           } else if (state is SummaryFailure) {

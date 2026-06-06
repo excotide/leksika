@@ -9,6 +9,7 @@ use App\Models\Summary;
 use App\Models\Flashcard; 
 use App\Models\Notification; 
 use App\Services\SummaryService;
+use App\Support\DocumentTitleFormatter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -46,10 +47,11 @@ class DocumentController extends Controller
             $file = $validated['file'];
             $path = $file->store('documents');
             $absolutePath = Storage::disk('local')->path($path);
+            $documentTitle = DocumentTitleFormatter::format($file->getClientOriginalName());
 
             $document = Document::create([
                 'user_id' => $request->user()->id,
-                'file_name' => $file->getClientOriginalName(),
+                'file_name' => $documentTitle,
                 'file_path' => $path,
             ]);
 
@@ -63,6 +65,8 @@ class DocumentController extends Controller
             $patterns = [
                 '/\bREFERENSI\b/i', 
                 '/\bDAFTAR PUSTAKA\b/i', 
+                '/\bREFERENCES\b/i',
+                '/\bBIBLIOGRAPHY\b/i',
                 '/\bUCAPAN TERIMAKASIH\b/i', 
                 '/\bACKNOWLEDGEMENT\b/i'
             ];
@@ -92,12 +96,13 @@ PANDUAN KETAT KONTEN RANGKUMAN:
 2. Setiap konsep penting yang diuraikan wajib dicantumkan sebagai sub-subbab atau poin tebal (bold) beserta penjelasannya agar rangkuman menjadi ringkas namun tetap kaya informasi yang komprehensif.
 3. Rangkuman harus menjadi satu-satunya sumber pengetahuan penunjang yang valid untuk menjawab soal kuis di bawahnya. Semua jawaban kuis harus sudah terjawab di dalam teks rangkuman.
 4. Struktur penulisan WAJIB menggunakan sintaks Markdown (gunakan judul '##', subbab '###', serta poin tebal '* **[Istilah/Konsep Pokok]**: Penjelasan mendalam').
-5. Target panjang konten utama: [$lengthParam].
+5. JANGAN menyertakan bagian referensi, daftar pustaka, bibliography, sitasi sumber, ucapan terima kasih, atau daftar penulis di akhir rangkuman. Fokus hanya pada materi inti yang perlu dipelajari.
+6. Target panjang konten utama: [$lengthParam].
 
 " . ($wantsQuiz ? "PANDUAN KETAT PENYUSUNAN FLASHCARD/SOAL (ANTI-DUPLIKASI):
-6. Buatlah kuis sebanyak [$quizCountParam] soal berdasarkan materi inti yang telah Anda jabarkan di atas. Pertanyaan harus fokus pada konsep keilmuan inti, teori, atau temuan penting dari dokumen.
-7. JANGAN PERNAH menulis teks kuis berupa daftar tanya-jawab konvensional atau penjelasan pengantar kuis di dalam teks rangkuman utama. Teks rangkuman harus benar-benar bersih dari format soal.
-8. Output soal kuis HANYA BOLEH ditulis satu kali saja di bagian paling akhir dokumen, wajib dibungkus di dalam format JSON murni array terlampir di bawah ini agar sistem saya bisa membacanya otomatis:
+7. Buatlah kuis sebanyak [$quizCountParam] soal berdasarkan materi inti yang telah Anda jabarkan di atas. Pertanyaan harus fokus pada konsep keilmuan inti, teori, atau temuan penting dari dokumen.
+8. JANGAN PERNAH menulis teks kuis berupa daftar tanya-jawab konvensional atau penjelasan pengantar kuis di dalam teks rangkuman utama. Teks rangkuman harus benar-benar bersih dari format soal.
+9. Output soal kuis HANYA BOLEH ditulis satu kali saja di bagian paling akhir dokumen, wajib dibungkus di dalam format JSON murni array terlampir di bawah ini agar sistem saya bisa membacanya otomatis:
 [
   {
     \"question\": \"Pertanyaan konseptual yang menguji pemahaman materi pokok\",
@@ -117,7 +122,7 @@ PANDUAN KETAT KONTEN RANGKUMAN:
                 strlen(trim($summaryText)) < 20 || 
                 Str::contains(strtolower($summaryText), ['gagal merangkum', 'maaf, ai gagal', 'tidak dapat merangkum', 'cannot summarize'])
             ) {
-                throw new \Exception("AI gagal menghasilkan output rangkuman yang valid untuk dokumen ini.");
+                throw new \Exception("Rangkuman belum berhasil dibuat dari dokumen ini.");
             }
 
             $flashcardSavedCount = 0;
@@ -130,6 +135,7 @@ PANDUAN KETAT KONTEN RANGKUMAN:
             }
 
             $pureSummary = preg_replace('/(\*\*|#)*\s*(Soal Kuis|Pertanyaan dan Jawaban|Kuis|Latihan|Flashcard|Jawaban).*/is', '', $pureSummary);
+            $pureSummary = $this->removeReferenceSections($pureSummary);
             $pureSummary = trim($pureSummary);
 
             $summary = Summary::create([
@@ -159,7 +165,7 @@ PANDUAN KETAT KONTEN RANGKUMAN:
                 'user_id'     => $request->user()->id,
                 'document_id' => $document->id,
                 'title'       => 'Rangkuman Siap! 📚',
-                'message'     => "Rangkuman untuk dokumen " . $file->getClientOriginalName() . " sudah siap! Yuk pelajari materi intinya sekarang.",
+                'message'     => "Rangkuman untuk dokumen " . $documentTitle . " sudah siap! Yuk pelajari materi intinya sekarang.",
                 'type'        => 'summary_success',
                 'is_read'     => DB::raw('false')
             ]);
@@ -204,24 +210,24 @@ PANDUAN KETAT KONTEN RANGKUMAN:
             $statusCode = 500;
 
             if (Str::contains(strtolower($errorMessage), ['context_length', 'too long', 'token limit', '413', 'max tokens'])) {
-                $customMessage = 'Dokumen terlalu panjang! Batasi isi dokumen atau potong menjadi beberapa bagian agar dapat diproses oleh AI.';
+                $customMessage = 'Dokumen terlalu panjang. Coba gunakan file yang lebih pendek atau pisahkan menjadi beberapa bagian.';
                 $statusCode = 400;
             } 
             elseif (Str::contains(strtolower($errorMessage), ['rate_limit', '429', 'unauthenticated', 'api key', 'overloaded', 'unavailable'])) {
-                $customMessage = 'Server AI sedang sangat sibuk atau mencapai batas limit harian. Silakan coba beberapa saat lagi.';
+                $customMessage = 'Rangkuman belum bisa dibuat karena layanan pemrosesan sedang ramai. Silakan coba beberapa saat lagi.';
                 $statusCode = 503;
             }
             elseif (Str::contains(strtolower($errorMessage), ['curl error 28', 'resolving timed out', 'could not resolve host', 'name or service not known', 'connection timed out', 'operation timed out'])) {
-                $customMessage = 'Server AI sedang tidak dapat dihubungi. Periksa koneksi internet backend lalu coba lagi.';
+                $customMessage = 'Rangkuman belum bisa dibuat karena koneksi pemrosesan sedang bermasalah. Silakan coba lagi beberapa saat lagi.';
                 $statusCode = 503;
             }
             elseif (Str::contains(strtolower($errorMessage), ['groq api error', 'groq exception'])) {
-                $customMessage = 'Layanan AI gagal memproses dokumen saat ini. Silakan coba beberapa saat lagi.';
+                $customMessage = 'Rangkuman belum bisa dibuat saat ini. Silakan coba beberapa saat lagi.';
                 $statusCode = 503;
             }
             elseif (
                 $errorMessage === "File tidak memiliki teks yang cukup untuk dirangkum." || 
-                $errorMessage === "AI gagal menghasilkan output rangkuman yang valid untuk dokumen ini."
+                $errorMessage === "Rangkuman belum berhasil dibuat dari dokumen ini."
             ) {
                 $customMessage = $errorMessage;
                 $statusCode = 422;
@@ -252,5 +258,19 @@ PANDUAN KETAT KONTEN RANGKUMAN:
             'status' => true,
             'data' => $document
         ]);
+    }
+
+    private function removeReferenceSections(string $summary): string
+    {
+        $summary = preg_replace(
+            '/(?:^|\n)\s*(?:[#*\s-]*)\s*(Referensi|Daftar Pustaka|References|Bibliography)\b.*$/isu',
+            '',
+            $summary
+        );
+
+        $summary = preg_replace('/\n\s*[-_=]{3,}\s*$/u', '', $summary ?? '');
+        $summary = preg_replace('/\n\s*\*\s*$/u', '', $summary ?? '');
+
+        return trim($summary ?? '');
     }
 }

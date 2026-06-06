@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:leksika/features/summary/domain/entities/document_entity.dart';
 
 class SummaryDetailScreen extends StatelessWidget {
   const SummaryDetailScreen({
@@ -7,11 +8,13 @@ class SummaryDetailScreen extends StatelessWidget {
     required this.title,
     required this.pageCount,
     required this.contents,
+    this.document,
   });
 
   final String title;
   final String pageCount;
   final List<Map<String, String>> contents;
+  final DocumentEntity? document;
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +45,10 @@ class SummaryDetailScreen extends StatelessWidget {
                       color: Color(0xFF2F6555),
                     ),
                   ),
+                  if (document?.flashcards.isNotEmpty ?? false) ...[
+                    const SizedBox(height: 16),
+                    _buildFlashcardShortcut(context),
+                  ],
                   const SizedBox(height: 24),
                   ...contents.map((data) => _buildContentCard(
                         data['subTitle'] ?? '',
@@ -52,6 +59,76 @@ class SummaryDetailScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFlashcardShortcut(BuildContext context) {
+    final totalCards = document?.flashcards.length ?? 0;
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => Navigator.pushNamed(
+          context,
+          '/isi-flashcard',
+          arguments: document,
+        ),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFB7EDD9), width: 1.5),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8FAF2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.style_outlined,
+                  color: Color(0xFF006947),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Buka Flashcard',
+                      style: TextStyle(
+                        color: Color(0xFF00362A),
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$totalCards kartu siap dipelajari',
+                      style: const TextStyle(
+                        color: Color(0xFF2F6555),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Color(0xFF006947),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

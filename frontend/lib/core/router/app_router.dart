@@ -117,6 +117,9 @@ class AppRouter {
         title: title,
         pageCount: pageCount,
         contents: contents,
+        document: args['document'] is DocumentEntity
+            ? args['document'] as DocumentEntity
+            : null,
       );
     }
 

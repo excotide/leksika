@@ -11,7 +11,9 @@ class DocumentModel extends DocumentEntity {
   });
 
   factory DocumentModel.fromJson(Map<String, dynamic> json) {
-    final titleField = json['file_name'] as String? ?? json['title'] as String? ?? 'Tanpa Judul';
+    final titleField = _formatTitle(
+      json['file_name'] as String? ?? json['title'] as String? ?? 'Tanpa Judul',
+    );
 
     String summaryText = '';
     if (json['summary'] != null && json['summary'] is Map) {
@@ -59,5 +61,29 @@ class DocumentModel extends DocumentEntity {
       return DateTime.tryParse(value);
     }
     return null;
+  }
+
+  static String _formatTitle(String value) {
+    final withoutExtension = value.replaceAll(RegExp(r'\.[a-zA-Z0-9]+$'), '');
+    final cleaned = withoutExtension
+        .replaceAll(RegExp(r'[_+\-]+'), ' ')
+        .replaceAll(RegExp(r'[^a-zA-Z0-9\u00C0-\u024F\s]'), ' ')
+        .replaceAll(RegExp(r'\b\d{3,}\b'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+
+    if (cleaned.isEmpty) return 'Tanpa Judul';
+
+    return cleaned
+        .split(' ')
+        .where((word) => word.isNotEmpty)
+        .map((word) {
+          if (word.length <= 2 && word == word.toUpperCase()) {
+            return word;
+          }
+          final lower = word.toLowerCase();
+          return '${lower[0].toUpperCase()}${lower.substring(1)}';
+        })
+        .join(' ');
   }
 }
