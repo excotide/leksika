@@ -32,9 +32,7 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
   bool _isFlipped = false;
 
   int _currentIndex = 0;
-  int _sudahMengerti = 0;
-  int _belumMengerti = 0;
-  bool _hasAnswered = false;
+  final Map<int, bool> _answersByCardIndex = {};
 
   List<FlashcardEntity> get _flashcards => widget.document?.flashcards ?? const [];
 
@@ -79,7 +77,6 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
       setState(() {
         _currentIndex++;
         _isFlipped = false;
-        _hasAnswered = false;
       });
       _controller.reset();
     }
@@ -90,7 +87,6 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
       setState(() {
         _currentIndex--;
         _isFlipped = false;
-        _hasAnswered = false;
       });
       _controller.reset();
     }
@@ -190,6 +186,8 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
 
     final anim = widget.bodyAnimation;
     final currentFlashcard = _flashcards[_currentIndex];
+    final hasAnsweredCurrentCard = _answersByCardIndex.containsKey(_currentIndex);
+    final isLastCard = _currentIndex == _flashcards.length - 1;
     final body = SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
         child: Column(
@@ -216,19 +214,11 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
                   backChild: _CardBack(
                     answer: currentFlashcard.answer,
                     onSudahMengerti: () {
-                      if (_hasAnswered) return;
-                      setState(() {
-                        _sudahMengerti++;
-                        _hasAnswered = true;
-                      });
+                      _answerCurrentCard(true);
                       _nextCard();
                     },
                     onBelumMengerti: () {
-                      if (_hasAnswered) return;
-                      setState(() {
-                        _belumMengerti++;
-                        _hasAnswered = true;
-                      });
+                      _answerCurrentCard(false);
                       _nextCard();
                     },
                   ),
@@ -242,20 +232,9 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
             _BottomNav(
               onBack: _prevCard,
               onNext: _nextCard,
-              hasAnswered: _hasAnswered,
-              isLastCard: _currentIndex == _flashcards.length - 1 && _hasAnswered,
-              onSelesai: () => Navigator.pushNamed(
-                context,
-                '/hasil-flashcard',
-                arguments: {
-                  'totalCards': _flashcards.length,
-                  'sudahMengerti': _sudahMengerti,
-                  'belumMengerti': _belumMengerti,
-                  'score': ((_sudahMengerti / _flashcards.length) * 100).round(),
-                  'topicName': widget.document?.title ?? 'Flashcard',
-                  'document': widget.document,
-                },
-              ),
+              hasAnswered: hasAnsweredCurrentCard,
+              isLastCard: isLastCard && hasAnsweredCurrentCard,
+              onSelesai: _finishReview,
             ),
           ],
         ),
@@ -274,6 +253,35 @@ class _FlashcardDetailPageState extends State<FlashcardDetailPage>
         position: anim.drive(slideTween),
         child: body,
       ),
+    );
+  }
+
+  void _answerCurrentCard(bool understood) {
+    setState(() {
+      _answersByCardIndex[_currentIndex] = understood;
+    });
+  }
+
+  void _finishReview() {
+    final sudahMengerti = _answersByCardIndex.values.where((value) => value).length;
+    final belumMengerti = _flashcards.length - sudahMengerti;
+    final score = (_flashcards.isEmpty
+        ? 0
+        : ((sudahMengerti / _flashcards.length) * 100).round())
+        .clamp(0, 100)
+        .toInt();
+
+    Navigator.pushNamed(
+      context,
+      '/hasil-flashcard',
+      arguments: {
+        'totalCards': _flashcards.length,
+        'sudahMengerti': sudahMengerti,
+        'belumMengerti': belumMengerti,
+        'score': score,
+        'topicName': widget.document?.title ?? 'Flashcard',
+        'document': widget.document,
+      },
     );
   }
 }

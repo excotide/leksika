@@ -19,7 +19,7 @@ class BottomNavbar extends StatelessWidget {
         color: Colors.white,
         elevation: 10,
         child: SizedBox(
-          height: 72,
+          height: 64,
           child: Row(
             children: [
               Expanded(
@@ -95,15 +95,16 @@ class BottomNavbar extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
-        padding: const EdgeInsets.symmetric(vertical: 6),
+        height: 56,
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeInOut,
-              width: 36,
-              height: 36,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
                 color: isActive ? const Color(0xFFB7EDD9) : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
@@ -114,17 +115,16 @@ class BottomNavbar extends StatelessWidget {
                   color: isActive
                       ? const Color(0xFF064E3B)
                       : const Color(0xFF059669),
-                  size: 22,
+                  size: 20,
                 ),
               ),
             ),
-            const SizedBox(height: 2),
             Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 8,
+                fontSize: 7,
                 fontWeight: FontWeight.bold,
                 color: isActive
                     ? const Color(0xFF064E3B)
