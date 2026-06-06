@@ -24,7 +24,7 @@ class SetelanPage extends StatelessWidget {
 class _SetelanView extends StatelessWidget {
   const _SetelanView();
 
-  void _showLogoutDialog(BuildContext context) {
+  void _confirmLogout(BuildContext context) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -37,6 +37,7 @@ class _SetelanView extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
+              Navigator.pop(dialogContext);
               context.read<AuthBloc>().add(const LogoutRequested());
               Navigator.pushNamedAndRemoveUntil(
                 context,
@@ -53,8 +54,6 @@ class _SetelanView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Scaffold adalah root widget halaman ini.
-    // backgroundColor
     return Scaffold(
       backgroundColor: const Color(0xFFE8F5EE),
       appBar: PreferredSize(
@@ -99,7 +98,6 @@ class _SetelanView extends StatelessWidget {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: const BottomNavbar(activeIndex: 3),
 
-      // ── Body ─────────────────────────────────────────────────
       body: BlocBuilder<ProfileBloc, ProfileState>(
         builder: (context, state) {
           if (state is ProfileLoading || state is ProfileInitial) {
@@ -116,7 +114,6 @@ class _SetelanView extends StatelessWidget {
             );
           }
 
-          // ProfileLoaded / ProfileSubmitting / ProfileUpdated → punya data profil
           final ProfileEntity profile = state is ProfileLoaded
               ? state.profile
               : state is ProfileUpdated
@@ -131,14 +128,12 @@ class _SetelanView extends StatelessWidget {
                 _ProfileHeader(profile: profile),
                 const SizedBox(height: 20),
 
-                // 2. Stats Card (Materi & Streak)
                 _StatsCard(
                   totalSummary: profile.totalSummary,
                   totalStreak: profile.totalStreak,
                 ),
                 const SizedBox(height: 16),
 
-                // 3. Info Cards (Email, Institusi, Lokasi)
                 _InfoCard(
                   icon: Icons.email_outlined,
                   label: 'EMAIL',
@@ -163,7 +158,6 @@ class _SetelanView extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
-                // 4. Tombol Edit Profile
                 _ActionButton(
                   label: 'Edit Profile',
                   icon: Icons.settings_outlined,
@@ -178,16 +172,11 @@ class _SetelanView extends StatelessWidget {
 
                 const SizedBox(height: 12),
 
-                // 5. Tombol Log Out
                 _ActionButton(
                   label: 'Log Out',
                   backgroundColor: const Color(0xFFD32F2F),
                   textColor: Colors.white,
-<<<<<<< HEAD
-                  onPressed: () => _showLogoutDialog(context),
-=======
                   onPressed: () => _confirmLogout(context),
->>>>>>> ebf3fed3db44e525ce9de2bb77c0acf6ea1d16e7
                 ),
 
                 const SizedBox(height: 16),
@@ -198,40 +187,8 @@ class _SetelanView extends StatelessWidget {
       ),
     );
   }
-
-  void _confirmLogout(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Apakah Anda yakin ingin keluar?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              context.read<AuthBloc>().add(const LogoutRequested());
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/login',
-                (route) => false,
-              );
-            },
-            child: const Text('Logout', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
-// ============================================================
-// WIDGET — _ErrorView
-// Tampilan saat gagal memuat profil, dengan tombol coba lagi.
-// ============================================================
 class _ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
@@ -270,10 +227,6 @@ class _ErrorView extends StatelessWidget {
   }
 }
 
-// ============================================================
-// WIDGET — _ProfileHeader
-// Menampilkan foto profil bulat, nama besar, dan bio di bawahnya.
-// ============================================================
 class _ProfileHeader extends StatelessWidget {
   const _ProfileHeader({required this.profile});
 
@@ -286,8 +239,6 @@ class _ProfileHeader extends StatelessWidget {
 
     return Column(
       children: [
-        // CircleAvatar: foto profil pengguna.
-        // radius: 48 → diameter 96px, sesuai foto.
         CircleAvatar(
           radius: 48,
           backgroundColor: const Color(0xFFCCCCCC),
@@ -300,7 +251,6 @@ class _ProfileHeader extends StatelessWidget {
 
         const SizedBox(height: 12),
 
-        // Nama pengguna — bold, hijau tua.
         Text(
           profile.name,
           style: const TextStyle(
@@ -313,7 +263,6 @@ class _ProfileHeader extends StatelessWidget {
 
         const SizedBox(height: 4),
 
-        // Bio / deskripsi singkat — abu-abu gelap, ukuran lebih kecil.
         Text(
           profile.bio?.isNotEmpty == true
               ? profile.bio!
@@ -329,11 +278,6 @@ class _ProfileHeader extends StatelessWidget {
   }
 }
 
-// ============================================================
-// WIDGET — _StatsCard
-// Kartu putih berisi dua kolom statistik: Materi & Streak.
-// Dipisahkan oleh garis vertikal tipis di tengah.
-// ============================================================
 class _StatsCard extends StatelessWidget {
   const _StatsCard({
     required this.totalSummary,
@@ -346,7 +290,6 @@ class _StatsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      // Kartu putih dengan sudut membulat dan shadow halus.
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(30),
@@ -360,10 +303,8 @@ class _StatsCard extends StatelessWidget {
       ),
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
       child: IntrinsicHeight(
-        // IntrinsicHeight memastikan Divider vertikal setinggi Row-nya.
         child: Row(
           children: [
-            // Kolom kiri: Materi
             Expanded(
               child: _StatItem(
                 icon: Icons.menu_book_outlined,
@@ -373,14 +314,12 @@ class _StatsCard extends StatelessWidget {
               ),
             ),
 
-            // Garis pemisah vertikal
             const VerticalDivider(
               color: Color(0xFFDDDDDD),
               thickness: 1,
               width: 32,
             ),
 
-            // Kolom kanan: Streak (ikon api, warna oranye)
             Expanded(
               child: _StatItem(
                 icon: Icons.local_fire_department_outlined,
@@ -397,10 +336,6 @@ class _StatsCard extends StatelessWidget {
   }
 }
 
-// ============================================================
-// WIDGET — _StatItem
-// Satu kolom statistik: ikon, label teks kecil, angka besar.
-// ============================================================
 class _StatItem extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
@@ -421,12 +356,10 @@ class _StatItem extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Ikon di atas (warna berbeda per stat)
         Icon(icon, color: iconColor, size: 20),
 
         const SizedBox(height: 6),
 
-        // Label kecil uppercase (MATERI / STREAK)
         Text(
           label,
           style: const TextStyle(
@@ -439,7 +372,6 @@ class _StatItem extends StatelessWidget {
 
         const SizedBox(height: 2),
 
-        // Angka besar — nilai statistik
         Text(
           value,
           style: TextStyle(
@@ -453,11 +385,6 @@ class _StatItem extends StatelessWidget {
   }
 }
 
-// ============================================================
-// WIDGET — _InfoCard
-// Kartu putih satu baris: ikon kiri, label atas + nilai bawah.
-// Dipakai untuk Email, Institusi, dan Lokasi.
-// ============================================================
 class _InfoCard extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -488,17 +415,14 @@ class _InfoCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Ikon di sebelah kiri, warna hijau tua.
           Icon(icon, color: const Color(0xFF004C31), size: 20),
 
           const SizedBox(width: 12),
 
-          // Kolom teks: label kecil hijau tua di atas, nilai di bawah.
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Label field — kecil, bold, hijau tua
                 Text(
                   label,
                   style: const TextStyle(
@@ -511,7 +435,6 @@ class _InfoCard extends StatelessWidget {
 
                 const SizedBox(height: 2),
 
-                // Nilai — teks utama, hitam gelap
                 Text(
                   value,
                   style: const TextStyle(
@@ -528,11 +451,6 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
-// ============================================================
-// WIDGET — _ActionButton
-// Tombol full-width generik: bisa untuk Edit Profile maupun Log Out.
-// Menerima warna background, warna teks, label, dan ikon opsional.
-// ============================================================
 class _ActionButton extends StatelessWidget {
   final String label;
   final IconData? icon;
@@ -555,8 +473,6 @@ class _ActionButton extends StatelessWidget {
       height: 50,
       child: ElevatedButton(
         onPressed: onPressed,
-
-        // Style tombol: background color sesuai parameter, sudut membulat.
         style: ElevatedButton.styleFrom(
           backgroundColor: backgroundColor,
           foregroundColor: textColor,
@@ -565,8 +481,6 @@ class _ActionButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(30),
           ),
         ),
-
-        // Konten tombol: ikon (opsional) + label
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

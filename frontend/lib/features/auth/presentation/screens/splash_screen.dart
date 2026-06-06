@@ -25,6 +25,7 @@ class _SplashScreenState extends State<SplashScreen> {
       Timer(const Duration(seconds: 3), () async {
         if (!mounted) return;
         final prefs = await SharedPreferences.getInstance();
+        if (!mounted) return;
         final hasSeenOnboarding =
             prefs.getBool(OnboardingScreen.seenKey) ?? false;
         final authState = context.read<AuthBloc>().state;
