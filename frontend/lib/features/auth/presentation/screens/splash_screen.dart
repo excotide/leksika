@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_state.dart';
+import 'package:leksika/features/auth/presentation/screens/onboarding_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -20,12 +22,19 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     Timer(const Duration(seconds: 3), () {
       if (mounted) setState(() => isSecondSplash = true);
-      Timer(const Duration(seconds: 3), () {
+      Timer(const Duration(seconds: 3), () async {
         if (!mounted) return;
+        final prefs = await SharedPreferences.getInstance();
+        final hasSeenOnboarding =
+            prefs.getBool(OnboardingScreen.seenKey) ?? false;
         final authState = context.read<AuthBloc>().state;
         Navigator.pushReplacementNamed(
           context,
-          authState is Authenticated ? '/home' : '/onboarding',
+          authState is Authenticated
+              ? '/home'
+              : hasSeenOnboarding
+                  ? '/login'
+                  : '/onboarding',
         );
       });
     });

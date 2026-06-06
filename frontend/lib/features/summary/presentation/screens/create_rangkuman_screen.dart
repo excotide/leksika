@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:mobkit_dashed_border/mobkit_dashed_border.dart';
 import 'package:leksika/core/di/injection_container.dart';
+import 'package:leksika/core/services/in_app_notification_service.dart';
 import 'package:leksika/features/summary/presentation/bloc/summary_bloc.dart';
 import 'package:leksika/features/summary/presentation/bloc/summary_event.dart';
 import 'package:leksika/features/summary/presentation/bloc/summary_state.dart';
@@ -87,18 +88,18 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
               _isLoadingVisible = false;
               if (Navigator.canPop(context)) Navigator.pop(context);
             }
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    const Icon(Icons.error_outline, color: Colors.white),
-                    const SizedBox(width: 10),
-                    Expanded(child: Text('Gagal Merangkum: ${state.message}')),
-                  ],
-                ),
-                backgroundColor: Colors.red,
-                behavior: SnackBarBehavior.floating,
-              ),
+            InAppNotificationService.show(
+              title: 'Gagal membuat rangkuman',
+              body: state.message,
+              icon: Icons.error_outline_rounded,
+              backgroundColor: const Color(0xFFFF3B30),
+              titleColor: Colors.white,
+              bodyColor: Colors.white,
+              iconBackgroundColor: Color(0x33FFFFFF),
+              iconColor: Colors.white,
+              closeIconColor: Colors.white,
+              bodyMaxLines: 5,
+              duration: const Duration(seconds: 6),
             );
           }
         },
@@ -385,10 +386,16 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
                 ? null
                 : () {
                     if (_selectedFile == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Pilih file terlebih dahulu!'),
-                        ),
+                      InAppNotificationService.show(
+                        title: 'Pilih file terlebih dahulu',
+                        body: 'Unggah dokumen sebelum membuat rangkuman.',
+                        icon: Icons.error_outline_rounded,
+                        backgroundColor: const Color(0xFFFF3B30),
+                        titleColor: Colors.white,
+                        bodyColor: Colors.white,
+                        iconBackgroundColor: Color(0x33FFFFFF),
+                        iconColor: Colors.white,
+                        closeIconColor: Colors.white,
                       );
                       return;
                     }

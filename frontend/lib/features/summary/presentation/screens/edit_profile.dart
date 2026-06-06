@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leksika/core/di/injection_container.dart';
+import 'package:leksika/core/services/in_app_notification_service.dart';
 import 'package:leksika/features/profile/domain/entities/profile_entity.dart';
 import 'package:leksika/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:leksika/features/profile/presentation/bloc/profile_event.dart';
@@ -103,6 +104,25 @@ class _EditProfileViewState extends State<_EditProfileView> {
     return null;
   }
 
+  void _showFloatingSnackBar(
+    String message, {
+    Duration? duration,
+    bool isError = false,
+  }) {
+    InAppNotificationService.show(
+      title: message,
+      icon: isError ? Icons.error_outline_rounded : Icons.check_circle_rounded,
+      backgroundColor: isError ? const Color(0xFFFF3B30) : Colors.white,
+      titleColor: isError ? Colors.white : const Color(0xFF1A1A1A),
+      bodyColor: isError ? Colors.white : const Color(0xFF2D6A4F),
+      iconBackgroundColor:
+          isError ? const Color(0x33FFFFFF) : const Color(0xFFE0F5EC),
+      iconColor: isError ? Colors.white : const Color(0xFF1A7A4A),
+      closeIconColor: isError ? Colors.white : const Color(0xFF6B7280),
+      duration: duration ?? const Duration(seconds: 3),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ProfileBloc, ProfileState>(
@@ -113,14 +133,10 @@ class _EditProfileViewState extends State<_EditProfileView> {
           if (_pickedImagePath != null) {
             // Teks profil tersimpan, masih menunggu upload foto — tandai & tunggu
             setState(() => _textSaved = true);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Profil tersimpan, mengupload foto...')),
-            );
+            _showFloatingSnackBar('Profil tersimpan, mengupload foto...');
           } else {
             // Tidak ada foto baru — selesai
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Profil berhasil diperbarui')),
-            );
+            _showFloatingSnackBar('Profil berhasil diperbarui');
             if (Navigator.canPop(context)) Navigator.pop(context);
           }
         } else if (state is ProfilePhotoUpdated) {
@@ -129,9 +145,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
             _pickedImagePath = null;
             _textSaved = false;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profil & foto berhasil diperbarui')),
-          );
+          _showFloatingSnackBar('Profil & foto berhasil diperbarui');
           if (Navigator.canPop(context)) Navigator.pop(context);
         } else if (state is ProfileError) {
           setState(() => _savePressed = false);
@@ -141,17 +155,14 @@ class _EditProfileViewState extends State<_EditProfileView> {
               _textSaved = false;
               _pickedImagePath = null;
             });
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Profil tersimpan. Foto gagal diupload, coba lagi nanti.'),
-                duration: Duration(seconds: 4),
-              ),
+            _showFloatingSnackBar(
+              'Profil tersimpan. Foto gagal diupload, coba lagi nanti.',
+              duration: const Duration(seconds: 4),
+              isError: true,
             );
             if (Navigator.canPop(context)) Navigator.pop(context);
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            _showFloatingSnackBar(state.message, isError: true);
           }
         }
       },

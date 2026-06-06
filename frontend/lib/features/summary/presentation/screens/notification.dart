@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leksika/core/di/injection_container.dart';
+import 'package:leksika/core/services/in_app_notification_service.dart';
 import 'package:leksika/features/summary/domain/entities/notification_entity.dart';
 import 'package:leksika/features/summary/presentation/bloc/notification_bloc.dart';
 import 'package:leksika/features/summary/presentation/bloc/notification_event.dart';
@@ -42,7 +43,7 @@ class NotificationScreen extends StatefulWidget {
 class _NotificationScreenState extends State<NotificationScreen> {
   static const Color _primaryGreen  = Color(0xFF1A7A4A);
   static const Color _appBarGreen   = Color(0xFF006947);
-  static const Color _bgColor       = Color(0xFFD8FFF0);
+  static const Color _bgColor       = Color(0xFFE8FAF2);
   static const Color _unreadCardBg  = Color(0xFFB8F0D8);
   static const Color _readCardBg    = Colors.white;
   static const Color _tipsCardColor = Color(0xFF1A7A4A);
@@ -161,8 +162,16 @@ class _NotificationScreenState extends State<NotificationScreen> {
       child: BlocConsumer<NotificationBloc, NotificationState>(
         listener: (context, state) {
           if (state is NotificationFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
+            InAppNotificationService.show(
+              title: 'Notifikasi gagal dimuat',
+              body: state.message,
+              icon: Icons.error_outline_rounded,
+              backgroundColor: const Color(0xFFFF3B30),
+              titleColor: Colors.white,
+              bodyColor: Colors.white,
+              iconBackgroundColor: const Color(0x33FFFFFF),
+              iconColor: Colors.white,
+              closeIconColor: Colors.white,
             );
           }
         },

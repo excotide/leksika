@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:leksika/core/services/in_app_notification_service.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_event.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_state.dart';
@@ -43,8 +44,16 @@ class HomeScreenState extends State<HomeScreen> {
             );
           }
           if (state is AuthFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
+            InAppNotificationService.show(
+              title: 'Logout gagal',
+              body: state.message,
+              icon: Icons.error_outline_rounded,
+              backgroundColor: const Color(0xFFFF3B30),
+              titleColor: Colors.white,
+              bodyColor: Colors.white,
+              iconBackgroundColor: const Color(0x33FFFFFF),
+              iconColor: Colors.white,
+              closeIconColor: Colors.white,
             );
           }
         },
@@ -57,7 +66,8 @@ class HomeScreenState extends State<HomeScreen> {
             elevation: 4,
             child: const Icon(Icons.add, color: Colors.white, size: 28),
           ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerDocked,
           bottomNavigationBar: const BottomNavbar(activeIndex: 0),
           body: SafeArea(
             child: SingleChildScrollView(
