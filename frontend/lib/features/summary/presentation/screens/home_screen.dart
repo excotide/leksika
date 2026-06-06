@@ -59,12 +59,16 @@ class HomeScreenState extends State<HomeScreen> {
         },
         child: Scaffold(
           backgroundColor: const Color(0xFFE8FAF2),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () => Navigator.pushNamed(context, '/create-rangkuman'),
-            backgroundColor: const Color(0xFF006947),
-            shape: const CircleBorder(),
-            elevation: 4,
-            child: const Icon(Icons.add, color: Colors.white, size: 28),
+          floatingActionButton: Transform.translate(
+            offset: const Offset(0, 8),
+            child: FloatingActionButton(
+              onPressed: () =>
+                  Navigator.pushNamed(context, '/create-rangkuman'),
+              backgroundColor: const Color(0xFF006947),
+              shape: const CircleBorder(),
+              elevation: 4,
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
+            ),
           ),
           floatingActionButtonLocation:
               FloatingActionButtonLocation.centerDocked,
