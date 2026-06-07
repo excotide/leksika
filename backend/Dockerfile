@@ -27,6 +27,9 @@ RUN docker-php-ext-install \
     zip \
     opcache
 
+# Copy PHP config
+COPY php.ini /usr/local/etc/php/conf.d/laravel.ini
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 

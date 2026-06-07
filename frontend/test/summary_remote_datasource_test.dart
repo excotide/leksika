@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:leksika/features/summary/data/datasources/summary_remote_datasource.dart';
 
-class RecordingAdapter extends HttpClientAdapter {
+class RecordingAdapter implements HttpClientAdapter {
   RequestOptions? lastRequest;
 
   @override

@@ -332,11 +332,10 @@ class _SummaryDetailScreenState extends State<SummaryDetailScreen> {
     );
 
     if (!mounted || selectedQuizCount == null) return;
-    await _createFlashcards(context, document, selectedQuizCount);
+    await _createFlashcards(document, selectedQuizCount);
   }
 
   Future<void> _createFlashcards(
-    BuildContext context,
     DocumentEntity document,
     String quizCount,
   ) async {

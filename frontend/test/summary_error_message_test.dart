@@ -32,12 +32,17 @@ class _FailingSummaryRemoteDataSource implements SummaryRemoteDataSource {
   final String message;
 
   @override
-  Future<List<DocumentModel>> getDocuments() async {
+  Future<List<DocumentModel>> getDocuments({String? search}) async {
     throw ServerException(message: message);
   }
 
   @override
   Future<DocumentModel> getDocumentDetail(int id) async {
+    throw ServerException(message: message);
+  }
+
+  @override
+  Future<DocumentModel> createFlashcards(int id, {String? quizCount}) async {
     throw ServerException(message: message);
   }
 
