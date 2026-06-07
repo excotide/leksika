@@ -587,9 +587,7 @@ class _CardBack extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        const Spacer(),
 
         // Label "JAWABAN" — bold, center, besar
         const Text(
@@ -605,26 +603,28 @@ class _CardBack extends StatelessWidget {
         const SizedBox(height: 24),
 
         Expanded(
-          child: SingleChildScrollView(
-            child: MarkdownBody(
-              data: answer,
-              selectable: false,
-              styleSheet: MarkdownStyleSheet(
-                textAlign: WrapAlignment.center,
-                p: const TextStyle(
-                  color: Color(0xFF000000),
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  height: 1.5,
-                ),
-                strong: const TextStyle(
-                  color: Color(0xFF000000),
-                  fontWeight: FontWeight.bold,
-                ),
-                listBullet: const TextStyle(
-                  color: Color(0xFF000000),
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+          child: Center(
+            child: SingleChildScrollView(
+              child: MarkdownBody(
+                data: answer,
+                selectable: false,
+                styleSheet: MarkdownStyleSheet(
+                  textAlign: WrapAlignment.center,
+                  p: const TextStyle(
+                    color: Color(0xFF000000),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
+                  strong: const TextStyle(
+                    color: Color(0xFF000000),
+                    fontWeight: FontWeight.bold,
+                  ),
+                  listBullet: const TextStyle(
+                    color: Color(0xFF000000),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

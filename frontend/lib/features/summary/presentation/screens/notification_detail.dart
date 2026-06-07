@@ -4,6 +4,7 @@ import 'package:leksika/core/services/in_app_notification_service.dart';
 import 'package:leksika/features/summary/domain/entities/document_entity.dart';
 import 'package:leksika/features/summary/domain/entities/notification_entity.dart';
 import 'package:leksika/features/summary/domain/usecases/get_summary_usecase.dart';
+import 'package:leksika/shared/widgets/loading_widget.dart';
 
 class NotificationDetailScreen extends StatefulWidget {
   const NotificationDetailScreen({super.key, required this.notification});
@@ -55,116 +56,118 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
         ),
         centerTitle: true,
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+      body: Stack(
         children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+          ListView(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFE0F5EC),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        _iconForType(notification.type),
-                        color: _primaryGreen,
-                        size: 24,
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFE0F5EC),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            _iconForType(notification.type),
+                            color: _primaryGreen,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                notification.title,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  height: 1.25,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1A1A1A),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                _formatDate(notification.createdAt),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            notification.title,
-                            style: const TextStyle(
-                              fontSize: 22,
-                              height: 1.25,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1A1A1A),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            _formatDate(notification.createdAt),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 20),
+                    Text(
+                      notification.message,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        height: 1.55,
+                        color: Color(0xFF2D6A4F),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
-                Text(
-                  notification.message,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    height: 1.55,
-                    color: Color(0xFF2D6A4F),
+              ),
+              if (notification.documentId != null) ...[
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton(
+                    onPressed: _isOpening ? null : _openRelatedDocument,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _primaryGreen,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      _isQuizReminder(notification.type)
+                          ? 'Buka Flashcard'
+                          : 'Buka Rangkuman',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ],
-            ),
+            ],
           ),
-          if (notification.documentId != null) ...[
-            const SizedBox(height: 18),
-            SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: ElevatedButton(
-                onPressed: _isOpening ? null : _openRelatedDocument,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _primaryGreen,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 0,
-                ),
-                child: _isOpening
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text(
-                        _isQuizReminder(notification.type)
-                            ? 'Buka Flashcard'
-                            : 'Buka Rangkuman',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+          if (_isOpening)
+            Positioned.fill(
+              child: Container(
+                color: _bgColor.withValues(alpha: 0.82),
+                child: const LoadingWidget(message: 'Membuka materi...'),
               ),
             ),
-          ],
         ],
       ),
     );
