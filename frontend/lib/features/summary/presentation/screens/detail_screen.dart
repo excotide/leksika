@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:leksika/core/utils/content_sanitizer.dart';
 import 'package:leksika/features/summary/domain/entities/document_entity.dart';
 
 class SummaryDetailScreen extends StatelessWidget {
@@ -204,7 +205,9 @@ class SummaryDetailScreen extends StatelessWidget {
           ),
           const Divider(color: Color(0xFFB7EDD9), height: 24),
           MarkdownBody(
-            data: _normalizeMarkdownForDisplay(body),
+            data: _normalizeMarkdownForDisplay(
+              ContentSanitizer.cleanGeneratedText(body),
+            ),
             selectable: true,
             styleSheet: MarkdownStyleSheet(
               h1: const TextStyle(

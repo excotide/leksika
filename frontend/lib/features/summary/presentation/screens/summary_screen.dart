@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leksika/core/di/injection_container.dart';
+import 'package:leksika/core/utils/content_sanitizer.dart';
 import 'package:leksika/features/summary/presentation/bloc/summary_bloc.dart';
 import 'package:leksika/features/summary/presentation/bloc/summary_event.dart';
 import 'package:leksika/features/summary/presentation/bloc/summary_state.dart';
@@ -40,7 +41,7 @@ class SummaryScreen extends StatelessWidget {
                   return ListTile(
                     title: Text(doc.title.isEmpty ? 'Untitled' : doc.title),
                     subtitle: Text(
-                      doc.summary,
+                      ContentSanitizer.cleanPreview(doc.summary),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),

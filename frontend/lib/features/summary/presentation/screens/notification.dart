@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leksika/core/di/injection_container.dart';
-import 'package:leksika/core/services/in_app_notification_service.dart';
 import 'package:leksika/features/summary/domain/entities/notification_entity.dart';
 import 'package:leksika/features/summary/presentation/bloc/notification_bloc.dart';
 import 'package:leksika/features/summary/presentation/bloc/notification_event.dart';
 import 'package:leksika/features/summary/presentation/bloc/notification_state.dart';
+import 'package:leksika/shared/widgets/loading_widget.dart';
 
 class NotificationItem {
   final int id;
@@ -44,7 +44,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   static const Color _primaryGreen  = Color(0xFF1A7A4A);
   static const Color _appBarGreen   = Color(0xFF006947);
   static const Color _bgColor       = Color(0xFFE8FAF2);
-  static const Color _unreadCardBg  = Color(0xFFB8F0D8);
+  static const Color _unreadCardBg  = Color(0xFFB8F0D8); // ✅ kartu unread lebih hijau
   static const Color _readCardBg    = Colors.white;
   static const Color _tipsCardColor = Color(0xFF1A7A4A);
   static const Color _leftBorder    = Color(0xFF1A7A4A);
@@ -162,16 +162,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
       child: BlocConsumer<NotificationBloc, NotificationState>(
         listener: (context, state) {
           if (state is NotificationFailure) {
-            InAppNotificationService.show(
-              title: 'Notifikasi gagal dimuat',
-              body: state.message,
-              icon: Icons.error_outline_rounded,
-              backgroundColor: const Color(0xFFFF3B30),
-              titleColor: Colors.white,
-              bodyColor: Colors.white,
-              iconBackgroundColor: const Color(0x33FFFFFF),
-              iconColor: Colors.white,
-              closeIconColor: Colors.white,
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
             );
           }
         },
@@ -191,7 +183,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
               backgroundColor: _appBarGreen,
               elevation: 0,
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new,
+                  color: Colors.white,
+                  size: 20,
+                ),
                 onPressed: () {
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context);
@@ -202,7 +198,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
               ),
               title: const Text(
                 'Notifikasi',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
               centerTitle: true,
               actions: [
@@ -211,35 +211,39 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     onPressed: () => _markAllRead(context),
                     child: const Text(
                       'Tandai dibaca',
-                      style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
               ],
             ),
             body: state is NotificationLoading
                 ? const Center(
-                    child: CircularProgressIndicator(color: _primaryGreen),
+                    child: LoadingWidget(message: 'Memuat notifikasi...'),
                   )
                 : items.isEmpty
                     ? _buildEmptyState()
                     : ListView(
-                        padding: const EdgeInsets.only(bottom: 32),
-                        children: [
-                          if (todayNotifs.isNotEmpty) ...[
-                            _buildSectionHeader('Hari Ini', unreadCount: unreadTodayCount),
-                            ...todayNotifs.map((n) => _buildNotifCard(context, n)),
-                          ],
-                          if (yesterdayNotifs.isNotEmpty) ...[
-                            _buildSectionHeader('Kemarin'),
-                            ...yesterdayNotifs.map((n) => _buildNotifCard(context, n)),
-                          ],
-                          if (olderNotifs.isNotEmpty) ...[
-                            _buildSectionHeader('Sebelumnya'),
-                            ...olderNotifs.map((n) => _buildNotifCard(context, n)),
-                          ],
-                          if (allRead) _buildAllReadFooter(),
-                        ],
-                      ),
+              padding: const EdgeInsets.only(bottom: 32),
+              children: [
+                if (todayNotifs.isNotEmpty) ...[
+                  _buildSectionHeader('Hari Ini', unreadCount: unreadTodayCount),
+                  ...todayNotifs.map((n) => _buildNotifCard(context, n)),
+                ],
+                if (yesterdayNotifs.isNotEmpty) ...[
+                  _buildSectionHeader('Kemarin'),
+                  ...yesterdayNotifs.map((n) => _buildNotifCard(context, n)),
+                ],
+                if (olderNotifs.isNotEmpty) ...[
+                  _buildSectionHeader('Sebelumnya'),
+                  ...olderNotifs.map((n) => _buildNotifCard(context, n)),
+                ],
+                if (allRead) _buildAllReadFooter(),
+              ],
+            ),
           );
         },
       ),

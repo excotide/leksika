@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leksika/core/services/in_app_notification_service.dart';
+import 'package:leksika/core/utils/content_sanitizer.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_event.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_state.dart';
@@ -404,9 +405,11 @@ class HomeScreenState extends State<HomeScreen> {
         arguments: {
           'title': doc.title.isEmpty ? 'Untitled' : doc.title,
           'pageCount': 'Ringkasan',
-          // Mengirim teks dengan format asli (berbintang/pagar) ke halaman detail agar bisa di-render sempurna
           'contents': [
-            {'subTitle': 'Ringkasan', 'body': rawSummary},
+            {
+              'subTitle': 'Ringkasan',
+              'body': ContentSanitizer.cleanGeneratedText(rawSummary),
+            },
           ],
         },
       ),
@@ -445,9 +448,7 @@ class HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              _stripMarkdown(
-                rawSummary,
-              ), // ← MENGGUNAKAN HELPER PEMBERSIH MARKDOWN DI SINI
+              ContentSanitizer.cleanPreview(rawSummary),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(color: Color(0xFF2F6555), fontSize: 13),
@@ -505,13 +506,6 @@ class HomeScreenState extends State<HomeScreen> {
 
   String _formatDate(DateTime? date) =>
       date == null ? 'Baru saja' : '${date.day}/${date.month}/${date.year}';
-
-  // Fungsi helper untuk menghapus tanda pagar dan bintang khusus di tampilan pratinjau kartu
-  String _stripMarkdown(String text) {
-    String clean = text.replaceAll(RegExp(r'#+\s*'), '');
-    clean = clean.replaceAll(RegExp(r'\*+|_+'), '');
-    return clean.trim();
-  }
 
   Widget _buildDailyTarget() {
     return Container(

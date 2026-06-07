@@ -13,67 +13,68 @@ class BottomNavbar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       top: false,
-      child: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8,
+      child: ColoredBox(
         color: Colors.white,
-        elevation: 10,
-        child: SizedBox(
-          height: 64,
-          child: Row(
-            children: [
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: _navItem(
-                        context,
-                        Icons.home_rounded,
-                        'BERANDA',
-                        activeIndex == 0,
-                        '/home',
+        child: BottomAppBar(
+          shape: const CircularNotchedRectangle(),
+          notchMargin: 8,
+          color: Colors.white,
+          elevation: 10,
+          child: SizedBox(
+            height: 64,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _navItem(
+                          context,
+                          Icons.home_rounded,
+                          'BERANDA',
+                          activeIndex == 0,
+                          '/home',
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: _navItem(
-                        context,
-                        Icons.description_outlined,
-                        'RIWAYAT',
-                        activeIndex == 1,
-                        '/riwayat',
+                      Expanded(
+                        child: _navItem(
+                          context,
+                          Icons.description_outlined,
+                          'RIWAYAT',
+                          activeIndex == 1,
+                          '/riwayat',
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 72),
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: _navItem(
-                        context,
-                        Icons.style_outlined,
-                        'FLASHCARD',
-                        activeIndex == 2,
-                        '/flashcard',
+                const SizedBox(width: 86),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _navItem(
+                          context,
+                          Icons.style_outlined,
+                          'FLASHCARD',
+                          activeIndex == 2,
+                          '/flashcard',
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: _navItem(
-                        context,
-                        Icons.person_outline_rounded,
-                        'PROFIL',
-                        activeIndex == 3,
-                        '/profil',
+                      Expanded(
+                        child: _navItem(
+                          context,
+                          Icons.person_outline_rounded,
+                          'PROFIL',
+                          activeIndex == 3,
+                          '/profil',
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

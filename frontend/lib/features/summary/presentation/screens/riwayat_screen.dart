@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leksika/core/di/injection_container.dart';
+import 'package:leksika/core/utils/content_sanitizer.dart';
 import 'package:leksika/features/summary/domain/entities/document_entity.dart';
 import 'package:leksika/features/summary/presentation/bloc/summary_bloc.dart';
 import 'package:leksika/features/summary/presentation/bloc/summary_event.dart';
@@ -180,7 +181,7 @@ class RiwayatScreenState extends State<RiwayatScreen> {
     final time = _formatDate(doc.createdAt);
 
     // Membersihkan teks dari sintaks markdown khusus untuk pratinjau teks di kartu
-    final cleanDesc = _stripMarkdown(desc);
+    final cleanDesc = ContentSanitizer.cleanPreview(desc);
 
     return GestureDetector(
       onTap: () {
@@ -191,7 +192,10 @@ class RiwayatScreenState extends State<RiwayatScreen> {
             'title': title,
             'pageCount': 'Ringkasan',
             'contents': [
-              {'subTitle': 'Hasil Rangkuman', 'body': desc},
+              {
+                'subTitle': 'Hasil Rangkuman',
+                'body': ContentSanitizer.cleanGeneratedText(desc),
+              },
             ],
             'document': doc,
           },
@@ -275,13 +279,4 @@ class RiwayatScreenState extends State<RiwayatScreen> {
     return '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
   }
 
-  // Fungsi helper untuk menghapus sintaks markdown mentah (#, *, _)
-  String _stripMarkdown(String text) {
-    // Menghapus tanda header markdown (contoh: ### )
-    String clean = text.replaceAll(RegExp(r'#+\s*'), '');
-    // Menghapus tanda bold/italic markdown (contoh: ** atau *)
-    clean = clean.replaceAll(RegExp(r'\*+|_+' ), '');
-    // Menghapus spasi berlebih di awal/akhir baris baru
-    return clean.trim();
-  }
 }

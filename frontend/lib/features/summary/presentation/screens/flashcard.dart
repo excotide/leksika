@@ -6,6 +6,7 @@ import 'package:leksika/features/summary/presentation/bloc/summary_bloc.dart';
 import 'package:leksika/features/summary/presentation/bloc/summary_event.dart';
 import 'package:leksika/features/summary/presentation/bloc/summary_state.dart';
 import 'package:leksika/features/summary/presentation/widgets/bottom_navbar.dart';
+import 'package:leksika/shared/widgets/loading_widget.dart';
 
 // ============================================================
 // PRESENTATION LAYER — Clean Architecture
@@ -17,13 +18,13 @@ class FlashcardItem {
   final DocumentEntity document;
   final String fileName;
   final int cardCount;
-  final int durationMinutes;
+  final DateTime? createdAt;
 
   const FlashcardItem({
     required this.document,
     required this.fileName,
     required this.cardCount,
-    required this.durationMinutes,
+    required this.createdAt,
   });
 }
 
@@ -38,7 +39,7 @@ class FlashcardPage extends StatelessWidget {
             document: document,
             fileName: document.title,
             cardCount: document.flashcards.length,
-            durationMinutes: (document.flashcards.length * 1.5).ceil(),
+            createdAt: document.createdAt,
           ),
         )
         .toList();
@@ -136,7 +137,7 @@ class FlashcardPage extends StatelessWidget {
         builder: (context, state) {
           if (state is SummaryLoading) {
             return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF006947)),
+              child: LoadingWidget(message: 'Memuat flashcard...'),
             );
           }
 
@@ -337,7 +338,7 @@ class _FlashcardCard extends StatelessWidget {
 
                     _MetaChip(
                       icon: Icons.access_time_outlined,
-                      label: '${item.durationMinutes}m',
+                      label: _formatDate(item.createdAt),
                     ),
                   ],
                 ),
@@ -424,3 +425,7 @@ class _MetaChip extends StatelessWidget {
   }
 }
 
+String _formatDate(DateTime? date) {
+  if (date == null) return 'Baru saja';
+  return '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
+}

@@ -1,3 +1,4 @@
+import 'package:leksika/core/utils/content_sanitizer.dart';
 import 'package:leksika/features/summary/domain/entities/document_entity.dart';
 import 'package:leksika/features/summary/data/models/flashcard_model.dart';
 
@@ -30,7 +31,7 @@ class DocumentModel extends DocumentEntity {
     return DocumentModel(
       id: (json['id'] as num?)?.toInt() ?? 0,
       title: titleField,
-      summary: summaryText,
+      summary: ContentSanitizer.cleanGeneratedText(summaryText),
       createdAt: _parseDate(json['created_at']) ?? DateTime.now(),
       flashcards: flashcards,
     );

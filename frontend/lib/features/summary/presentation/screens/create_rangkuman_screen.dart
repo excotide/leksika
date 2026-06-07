@@ -270,7 +270,7 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
               const SizedBox(height: 4),
               Text(
                 _selectedFile == null
-                    ? 'Dukung PDF, DOCX, atau Gambar'
+                    ? 'Dukung PDF, DOCX'
                     : _selectedFile!.path.split('/').last,
                 style: const TextStyle(color: Color(0xFF2F6555), fontSize: 13),
               ),

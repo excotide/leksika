@@ -1,3 +1,4 @@
+import 'package:leksika/core/utils/content_sanitizer.dart';
 import 'package:leksika/features/summary/domain/entities/flashcard_entity.dart';
 
 class FlashcardModel extends FlashcardEntity {
@@ -13,8 +14,12 @@ class FlashcardModel extends FlashcardEntity {
     return FlashcardModel(
       id: (json['id'] as num?)?.toInt() ?? 0,
       documentId: (json['document_id'] as num?)?.toInt() ?? 0,
-      question: json['question'] as String? ?? '',
-      answer: json['answer'] as String? ?? '',
+      question: ContentSanitizer.cleanGeneratedText(
+        json['question'] as String? ?? '',
+      ),
+      answer: ContentSanitizer.cleanGeneratedText(
+        json['answer'] as String? ?? '',
+      ),
       createdAt: _parseDate(json['created_at']),
     );
   }

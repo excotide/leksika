@@ -25,6 +25,7 @@ class InAppNotificationService {
 
     final overlay = appNavigatorKey.currentState?.overlay;
     if (overlay == null) return;
+    final hasBody = body.trim().isNotEmpty;
 
     _activeOverlay = OverlayEntry(
       builder: (overlayContext) => Positioned(
@@ -56,7 +57,9 @@ class InAppNotificationService {
                     ],
                   ),
                   child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: hasBody
+                        ? CrossAxisAlignment.start
+                        : CrossAxisAlignment.center,
                     children: [
                       Container(
                         width: 38,

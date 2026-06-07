@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:leksika/features/summary/domain/entities/document_entity.dart';
 import 'package:leksika/features/summary/domain/entities/flashcard_entity.dart';
 
@@ -528,14 +529,26 @@ class _CardFront extends StatelessWidget {
         const Spacer(),
 
         // Teks soal — center, bold, hitam
-        Text(
-          question,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Color(0xFF000000),
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-            height: 1.6,
+        MarkdownBody(
+          data: question,
+          selectable: false,
+          styleSheet: MarkdownStyleSheet(
+            textAlign: WrapAlignment.center,
+            p: const TextStyle(
+              color: Color(0xFF000000),
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              height: 1.6,
+            ),
+            strong: const TextStyle(
+              color: Color(0xFF000000),
+              fontWeight: FontWeight.bold,
+            ),
+            listBullet: const TextStyle(
+              color: Color(0xFF000000),
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
 
@@ -591,18 +604,34 @@ class _CardBack extends StatelessWidget {
 
         const SizedBox(height: 24),
 
-        Text(
-          answer,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Color(0xFF000000),
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            height: 1.5,
+        Expanded(
+          child: SingleChildScrollView(
+            child: MarkdownBody(
+              data: answer,
+              selectable: false,
+              styleSheet: MarkdownStyleSheet(
+                textAlign: WrapAlignment.center,
+                p: const TextStyle(
+                  color: Color(0xFF000000),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                ),
+                strong: const TextStyle(
+                  color: Color(0xFF000000),
+                  fontWeight: FontWeight.bold,
+                ),
+                listBullet: const TextStyle(
+                  color: Color(0xFF000000),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
         ),
 
-        const Spacer(),
+        const SizedBox(height: 18),
 
         // Dua tombol berdampingan: Sudah Mengerti (hijau) & Belum Mengerti (kuning)
         Row(
