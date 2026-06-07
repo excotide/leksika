@@ -20,12 +20,12 @@ class _PusatBantuanScreenState extends State<PusatBantuanScreen> {
     {
       'question': 'Format file apa yang didukung?',
       'answer':
-          'Leksika mendukung file dalam format PDF (.pdf) dan Microsoft Word (.docx). Pastikan ukuran file tidak melebihi batas yang ditentukan.',
+          'Leksika mendukung file dalam format PDF (.pdf) dan Microsoft Word (.docx). Pastikan ukuran file tidak lebih dari 20 MB.',
     },
     {
       'question': 'Berapa batas ukuran file upload?',
       'answer':
-          'Batas ukuran file upload adalah 10 MB per file. Jika file kamu melebihi batas ini, coba kompres terlebih dahulu.',
+          'Batas ukuran file upload adalah 20 MB per file. Jika file kamu melebihi batas ini, coba kompres terlebih dahulu.',
     },
     {
       'question': 'Kenapa rangkuman saya gagal dibuat?',

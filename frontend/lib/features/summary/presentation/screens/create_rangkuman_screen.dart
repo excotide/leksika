@@ -18,6 +18,8 @@ class CreateRangkumanScreen extends StatefulWidget {
 }
 
 class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
+  static const int _maxUploadBytes = 20 * 1024 * 1024;
+
   String _selectedPanjang = 'Sedang (5-7 Paragraf)';
   String _selectedSoal = '10 Soal';
   bool _buatFlashcard = true;
@@ -40,13 +42,47 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
       );
 
       if (result != null && result.files.single.path != null) {
+        final pickedFile = result.files.single;
+        final file = File(pickedFile.path!);
+        final fileSize = pickedFile.size > 0 ? pickedFile.size : await file.length();
+
+        if (fileSize > _maxUploadBytes) {
+          setState(() {
+            _selectedFile = null;
+          });
+          _showFileSizeError();
+          return;
+        }
+
         setState(() {
-          _selectedFile = File(result.files.single.path!);
+          _selectedFile = file;
         });
       }
     } catch (e) {
       debugPrint("Error picking file: $e");
     }
+  }
+
+  bool _isSelectedFileTooLarge() {
+    final file = _selectedFile;
+    if (file == null) return false;
+    return file.lengthSync() > _maxUploadBytes;
+  }
+
+  void _showFileSizeError() {
+    InAppNotificationService.show(
+      title: 'Ukuran file terlalu besar',
+      body: 'File maksimal 20 MB. Pilih file yang lebih kecil atau kompres dokumen terlebih dahulu.',
+      icon: Icons.error_outline_rounded,
+      backgroundColor: const Color(0xFFFF3B30),
+      titleColor: Colors.white,
+      bodyColor: Colors.white,
+      iconBackgroundColor: const Color(0x33FFFFFF),
+      iconColor: Colors.white,
+      closeIconColor: Colors.white,
+      bodyMaxLines: 4,
+      duration: const Duration(seconds: 6),
+    );
   }
 
   @override
@@ -270,7 +306,7 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
               const SizedBox(height: 4),
               Text(
                 _selectedFile == null
-                    ? 'Dukung PDF, DOCX'
+                    ? 'Dukung PDF, DOCX • Maks. 20 MB'
                     : _selectedFile!.path.split('/').last,
                 style: const TextStyle(color: Color(0xFF2F6555), fontSize: 13),
               ),
@@ -397,6 +433,10 @@ class CreateRangkumanScreenState extends State<CreateRangkumanScreen> {
                         iconColor: Colors.white,
                         closeIconColor: Colors.white,
                       );
+                      return;
+                    }
+                    if (_isSelectedFileTooLarge()) {
+                      _showFileSizeError();
                       return;
                     }
                     context.read<SummaryBloc>().add(

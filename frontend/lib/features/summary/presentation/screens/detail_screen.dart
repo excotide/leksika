@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:leksika/core/utils/content_sanitizer.dart';
@@ -204,49 +206,150 @@ class SummaryDetailScreen extends StatelessWidget {
             ),
           ),
           const Divider(color: Color(0xFFB7EDD9), height: 24),
-          MarkdownBody(
-            data: _normalizeMarkdownForDisplay(
+          _buildMarkdownContent(
+            _normalizeMarkdownForDisplay(
               ContentSanitizer.cleanGeneratedText(body),
-            ),
-            selectable: true,
-            styleSheet: MarkdownStyleSheet(
-              h1: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF00362A),
-                height: 1.35,
-              ),
-              h2: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF00362A),
-                height: 1.35,
-              ),
-              h3: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF00362A),
-                height: 1.35,
-              ),
-              p: const TextStyle(
-                fontSize: 15,
-                color: Color(0xFF2F6555),
-                height: 1.6,
-              ),
-              strong: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF00362A),
-              ),
-              listBullet: const TextStyle(
-                color: Color(0xFF006947),
-                fontSize: 15,
-              ),
-              blockSpacing: 12,
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildMarkdownContent(String markdown) {
+    final hasTable = _containsMarkdownTable(markdown);
+    final tableWidth = _estimatedTableWidth(markdown);
+    final markdownBody = MarkdownBody(
+      data: markdown,
+      selectable: true,
+      styleSheet: _markdownStyleSheet(hasTable: hasTable),
+    );
+
+    if (!hasTable) return markdownBody;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(Icons.swipe_left_rounded, color: Color(0xFF2F6555), size: 16),
+            SizedBox(width: 6),
+            Text(
+              'Geser tabel ke samping',
+              style: TextStyle(
+                color: Color(0xFF2F6555),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return Scrollbar(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: math.max(constraints.maxWidth, tableWidth),
+                  child: markdownBody,
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  MarkdownStyleSheet _markdownStyleSheet({required bool hasTable}) {
+    return MarkdownStyleSheet(
+      h1: const TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF00362A),
+        height: 1.35,
+      ),
+      h2: const TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF00362A),
+        height: 1.35,
+      ),
+      h3: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF00362A),
+        height: 1.35,
+      ),
+      p: const TextStyle(
+        fontSize: 15,
+        color: Color(0xFF2F6555),
+        height: 1.6,
+      ),
+      strong: const TextStyle(
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF00362A),
+      ),
+      listBullet: const TextStyle(
+        color: Color(0xFF006947),
+        fontSize: 15,
+      ),
+      tableHead: const TextStyle(
+        color: Color(0xFF00362A),
+        fontSize: 13,
+        fontWeight: FontWeight.bold,
+        height: 1.35,
+      ),
+      tableBody: const TextStyle(
+        color: Color(0xFF1F4038),
+        fontSize: 13,
+        height: 1.4,
+      ),
+      tableColumnWidth:
+          hasTable ? const FixedColumnWidth(132) : const FlexColumnWidth(),
+      tableCellsPadding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 10,
+      ),
+      tableBorder: TableBorder.all(
+        color: const Color(0xFF8EA09A),
+        width: 1,
+      ),
+      blockSpacing: 12,
+    );
+  }
+
+  bool _containsMarkdownTable(String markdown) {
+    final lines = markdown.split('\n');
+    for (var i = 0; i < lines.length - 1; i++) {
+      if (_markdownTableColumnCount(lines[i]) >= 2 &&
+          RegExp(r'^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$')
+              .hasMatch(lines[i + 1])) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  double _estimatedTableWidth(String markdown) {
+    final maxColumns = markdown.split('\n').map(_markdownTableColumnCount).fold<int>(
+          0,
+          (previous, current) => math.max(previous, current),
+        );
+    return (math.max(0, maxColumns) * 132).toDouble();
+  }
+
+  int _markdownTableColumnCount(String line) {
+    final trimmed = line.trim();
+    if (!trimmed.contains('|')) return 0;
+    final cells = trimmed
+        .replaceAll(RegExp(r'^\|'), '')
+        .replaceAll(RegExp(r'\|$'), '')
+        .split('|')
+        .where((cell) => cell.trim().isNotEmpty)
+        .length;
+    return cells;
   }
 
   String _normalizeMarkdownForDisplay(String value) {

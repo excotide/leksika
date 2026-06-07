@@ -279,15 +279,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
                           const SizedBox(height: 15),
-                          TextButton(
-                            onPressed:
-                                isLoading ? null : () {
-                                  if (Navigator.canPop(context)) Navigator.pop(context);
-                                },
-                            child: const Text(
-                              'Sudah punya akun? Log in',
-                              style: TextStyle(color: Color(0xFF006947)),
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text('Sudah punya akun? '),
+                              GestureDetector(
+                                onTap: isLoading
+                                    ? null
+                                    : () {
+                                        if (Navigator.canPop(context)) {
+                                          Navigator.pop(context);
+                                        } else {
+                                          Navigator.pushReplacementNamed(
+                                            context,
+                                            '/login',
+                                          );
+                                        }
+                                      },
+                                child: const Text(
+                                  'Log in',
+                                  style: TextStyle(
+                                    color: Color(0xFF006947),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
