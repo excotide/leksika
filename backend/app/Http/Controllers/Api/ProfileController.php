@@ -23,7 +23,9 @@ class ProfileController extends Controller
         if ($user->avatar_path) {
             $avatarUrl = request()->getSchemeAndHttpHost()
                 . '/storage/'
-                . $user->avatar_path;
+                . $user->avatar_path
+                . '?v='
+                . optional($user->updated_at)->timestamp;
         }
 
         return [

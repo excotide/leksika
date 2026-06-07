@@ -51,11 +51,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => const SyaratKetentuanScreen(),
+        builder: (_) => SyaratKetentuanScreen(initialAgreed: _isAgree),
       ),
     );
-    if (result == true) {
-      setState(() => _isAgree = true);
+    if (result != null && mounted) {
+      setState(() => _isAgree = result);
     }
   }
 

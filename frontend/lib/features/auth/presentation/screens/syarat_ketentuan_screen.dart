@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 class SyaratKetentuanScreen extends StatefulWidget {
-  const SyaratKetentuanScreen({super.key});
+  const SyaratKetentuanScreen({
+    super.key,
+    this.initialAgreed = false,
+  });
+
+  final bool initialAgreed;
 
   @override
   State<SyaratKetentuanScreen> createState() => _SyaratKetentuanScreenState();
@@ -28,6 +33,13 @@ class _SyaratKetentuanScreenState extends State<SyaratKetentuanScreen> {
           'Pastikan dokumen yang diunggah adalah milikmu atau kamu memiliki izin penggunaan yang sah.',
     },
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _agreeSyarat = widget.initialAgreed;
+    _agreePrivasi = widget.initialAgreed;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +94,9 @@ class _SyaratKetentuanScreenState extends State<SyaratKetentuanScreen> {
                   size: 20,
                 ),
                 onPressed: () {
-                  if (Navigator.canPop(context)) Navigator.pop(context);
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context, _agreeSyarat && _agreePrivasi);
+                  }
                 },
               ),
               const Text(
@@ -93,19 +107,7 @@ class _SyaratKetentuanScreenState extends State<SyaratKetentuanScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              Container(
-                width: 38,
-                height: 38,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.notifications_none_outlined,
-                  color: Color(0xFF006947),
-                  size: 20,
-                ),
-              ),
+              const SizedBox(width: 48),
             ],
           ),
         ),
