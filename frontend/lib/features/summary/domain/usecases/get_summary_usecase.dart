@@ -9,9 +9,20 @@ class GetDocumentsUsecase {
 
   final SummaryRepository repository;
 
-  Future<Either<Failure, List<DocumentEntity>>> call() {
-    return repository.getDocuments();
+  Future<Either<Failure, List<DocumentEntity>>> call([
+    GetDocumentsParams params = const GetDocumentsParams(),
+  ]) {
+    return repository.getDocuments(search: params.search);
   }
+}
+
+class GetDocumentsParams extends Equatable {
+  const GetDocumentsParams({this.search});
+
+  final String? search;
+
+  @override
+  List<Object?> get props => [search];
 }
 
 class GetDocumentDetailUsecase {
@@ -31,6 +42,32 @@ class GetDocumentDetailParams extends Equatable {
 
   @override
   List<Object?> get props => [id];
+}
+
+class CreateFlashcardsUsecase {
+  CreateFlashcardsUsecase(this.repository);
+
+  final SummaryRepository repository;
+
+  Future<Either<Failure, DocumentEntity>> call(CreateFlashcardsParams params) {
+    return repository.createFlashcards(
+      params.id,
+      quizCount: params.quizCount,
+    );
+  }
+}
+
+class CreateFlashcardsParams extends Equatable {
+  const CreateFlashcardsParams({
+    required this.id,
+    this.quizCount,
+  });
+
+  final int id;
+  final String? quizCount;
+
+  @override
+  List<Object?> get props => [id, quizCount];
 }
 
 class UploadDocumentUsecase {

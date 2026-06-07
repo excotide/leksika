@@ -11,9 +11,11 @@ class SummaryRepositoryImpl implements SummaryRepository {
   final SummaryRemoteDataSource remoteDataSource;
 
   @override
-  Future<Either<Failure, List<DocumentEntity>>> getDocuments() async {
+  Future<Either<Failure, List<DocumentEntity>>> getDocuments({
+    String? search,
+  }) async {
     try {
-      final documents = await remoteDataSource.getDocuments();
+      final documents = await remoteDataSource.getDocuments(search: search);
       return Right(documents);
     } on EmailNotVerifiedException {
       return Left(EmailNotVerifiedFailure());
@@ -28,6 +30,26 @@ class SummaryRepositoryImpl implements SummaryRepository {
   Future<Either<Failure, DocumentEntity>> getDocumentDetail(int id) async {
     try {
       final document = await remoteDataSource.getDocumentDetail(id);
+      return Right(document);
+    } on EmailNotVerifiedException {
+      return Left(EmailNotVerifiedFailure());
+    } on UnauthorizedException {
+      return Left(UnauthorizedFailure());
+    } on ServerException catch (error) {
+      return Left(ServerFailure(error.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, DocumentEntity>> createFlashcards(
+    int id, {
+    String? quizCount,
+  }) async {
+    try {
+      final document = await remoteDataSource.createFlashcards(
+        id,
+        quizCount: quizCount,
+      );
       return Right(document);
     } on EmailNotVerifiedException {
       return Left(EmailNotVerifiedFailure());

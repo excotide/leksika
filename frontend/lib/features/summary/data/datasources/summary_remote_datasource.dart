@@ -5,9 +5,11 @@ import 'package:leksika/core/errors/exceptions.dart';
 import 'package:leksika/features/summary/data/models/document_model.dart';
 
 abstract class SummaryRemoteDataSource {
-  Future<List<DocumentModel>> getDocuments();
+  Future<List<DocumentModel>> getDocuments({String? search});
 
   Future<DocumentModel> getDocumentDetail(int id);
+
+  Future<DocumentModel> createFlashcards(int id, {String? quizCount});
 
   Future<DocumentModel> uploadDocument({
     required String filePath,
@@ -23,9 +25,15 @@ class SummaryRemoteDataSourceImpl implements SummaryRemoteDataSource {
   final Dio dio;
 
   @override
-  Future<List<DocumentModel>> getDocuments() async {
+  Future<List<DocumentModel>> getDocuments({String? search}) async {
     try {
-      final response = await dio.get('/documents');
+      final normalizedSearch = search?.trim();
+      final response = await dio.get(
+        '/documents',
+        queryParameters: normalizedSearch == null || normalizedSearch.isEmpty
+            ? null
+            : {'search': normalizedSearch},
+      );
       final data = response.data as Map<String, dynamic>;
       final list = (data['data'] as List<dynamic>? ?? [])
           .map((item) => DocumentModel.fromJson(item as Map<String, dynamic>))
@@ -40,6 +48,23 @@ class SummaryRemoteDataSourceImpl implements SummaryRemoteDataSource {
   Future<DocumentModel> getDocumentDetail(int id) async {
     try {
       final response = await dio.get('/documents/$id');
+      final data = response.data as Map<String, dynamic>;
+      return DocumentModel.fromJson(data['data'] as Map<String, dynamic>);
+    } on DioException catch (error) {
+      _handleDioError(error);
+    }
+  }
+
+  @override
+  Future<DocumentModel> createFlashcards(int id, {String? quizCount}) async {
+    try {
+      final response = await dio.post(
+        '/documents/$id/flashcards',
+        data: {
+          if (quizCount != null && quizCount.trim().isNotEmpty)
+            'quiz_count': quizCount,
+        },
+      );
       final data = response.data as Map<String, dynamic>;
       return DocumentModel.fromJson(data['data'] as Map<String, dynamic>);
     } on DioException catch (error) {

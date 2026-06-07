@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Helpers\StreakHelper;
 use App\Http\Controllers\Controller;
+use App\Jobs\SendQuizReminderJob;
 use App\Models\Document;
 use App\Models\Summary;
 use App\Models\Flashcard; 
@@ -21,10 +22,28 @@ class DocumentController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $history = Document::where('user_id', $user->id)
-            ->with(['summary', 'flashcards', 'notifications']) 
-            ->latest()
-            ->get();
+        $search = trim((string) $request->query('search', ''));
+        $historyQuery = Document::where('user_id', $user->id)
+            ->with(['summary', 'flashcards', 'notifications']);
+
+        if ($search !== '') {
+            $searchPattern = '%' . mb_strtolower($search) . '%';
+
+            $historyQuery->where(function ($query) use ($searchPattern) {
+                $query
+                    ->whereRaw('LOWER(file_name) LIKE ?', [$searchPattern])
+                    ->orWhereHas('summary', function ($summaryQuery) use ($searchPattern) {
+                        $summaryQuery->whereRaw('LOWER(summary_text) LIKE ?', [$searchPattern]);
+                    })
+                    ->orWhereHas('flashcards', function ($flashcardQuery) use ($searchPattern) {
+                        $flashcardQuery
+                            ->whereRaw('LOWER(question) LIKE ?', [$searchPattern])
+                            ->orWhereRaw('LOWER(answer) LIKE ?', [$searchPattern]);
+                    });
+            });
+        }
+
+        $history = $historyQuery->latest()->get();
 
         return response()->json([
             'status' => true,
@@ -187,7 +206,7 @@ PANDUAN KETAT KONTEN RANGKUMAN:
                     'user_id'     => $request->user()->id,
                     'document_id' => $document->id,
                     'title'       => 'Asah Otak Sekarang! 🧠',
-                    'message'     => "Rangkuman & Flashcard sudah siap. Yuk langsung uji pemahaman awalmu untuk mengunci ingatan!",
+                    'message'     => "Flashcard untuk dokumen " . $documentTitle . " sudah siap. Yuk langsung uji pemahaman awalmu untuk mengunci ingatan!",
                     'type'        => 'quiz_reminder',
                     'is_read'     => DB::raw('false')
                 ]);
@@ -283,6 +302,139 @@ PANDUAN KETAT KONTEN RANGKUMAN:
         ]);
     }
 
+    public function generateFlashcards(Request $request, SummaryService $aiService, $id)
+    {
+        $validated = $request->validate([
+            'quiz_count' => ['nullable', 'string'],
+        ]);
+
+        $document = Document::where('user_id', $request->user()->id)
+            ->with(['summary', 'flashcards', 'notifications'])
+            ->find($id);
+
+        if (!$document) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Dokumen tidak ditemukan.'
+            ], 404);
+        }
+
+        if ($document->flashcards->isNotEmpty()) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Flashcard sudah tersedia.',
+                'data' => $document,
+            ]);
+        }
+
+        $sourceText = trim((string) ($document->extracted_text ?: $document->summary?->summary_text));
+
+        if (strlen($sourceText) < 10) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Teks dokumen tidak cukup untuk membuat flashcard.'
+            ], 422);
+        }
+
+        $quizCountParam = $validated['quiz_count'] ?? '5 Soal';
+        $prompt = "Anda adalah AI edukasi Leksika. Buat flashcard sebanyak [$quizCountParam] soal dari materi yang diberikan.
+Output HANYA berupa JSON murni array dengan format:
+[
+  {
+    \"question\": \"Pertanyaan konseptual yang menguji pemahaman materi pokok\",
+    \"answer\": \"Jawaban singkat, tepat, dan padat.\"
+  }
+]
+Jangan sertakan markdown, pembuka, penutup, atau teks selain JSON.";
+
+        try {
+            $flashcardText = $aiService->getGroqSummary(
+                $sourceText,
+                $prompt,
+                true,
+                $quizCountParam
+            );
+
+            $flashcardJson = $this->extractFlashcardJson($flashcardText);
+            $quizArray = $flashcardJson ? json_decode($flashcardJson, true) : null;
+
+            if (!is_array($quizArray)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Flashcard belum berhasil dibuat dari rangkuman ini.'
+                ], 422);
+            }
+
+            DB::beginTransaction();
+
+            foreach ($quizArray as $quiz) {
+                if (!isset($quiz['question'], $quiz['answer'])) {
+                    continue;
+                }
+
+                Flashcard::create([
+                    'user_id' => $request->user()->id,
+                    'document_id' => $document->id,
+                    'question' => trim((string) $quiz['question']),
+                    'answer' => trim((string) $quiz['answer']),
+                ]);
+            }
+
+            DB::commit();
+
+            $document = $document->fresh(['summary', 'flashcards', 'notifications']);
+
+            if ($document->flashcards->isEmpty()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Flashcard belum berhasil dibuat dari rangkuman ini.'
+                ], 422);
+            }
+
+            $quizNotification = Notification::create([
+                'user_id'     => $request->user()->id,
+                'document_id' => $document->id,
+                'title'       => 'Asah Otak Sekarang! 🧠',
+                'message'     => "Flashcard untuk dokumen " . $document->file_name . " sudah siap. Yuk langsung uji pemahaman awalmu untuk mengunci ingatan!",
+                'type'        => 'quiz_reminder',
+                'is_read'     => DB::raw('false')
+            ]);
+
+            app(FcmService::class)->sendToUser(
+                $request->user()->id,
+                $quizNotification->title,
+                $quizNotification->message,
+                [
+                    'notification_id' => $quizNotification->id,
+                    'document_id' => $document->id,
+                    'type' => $quizNotification->type,
+                ],
+            );
+
+            SendQuizReminderJob::dispatch(
+                $request->user()->id,
+                $document->id,
+                3
+            )->delay(now()->addDays(3));
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Flashcard berhasil dibuat.',
+                'data' => $document,
+            ], 201);
+        } catch (\Throwable $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Flashcard belum bisa dibuat saat ini. Silakan coba beberapa saat lagi.',
+                'error' => $e->getMessage(),
+            ], 503);
+        }
+    }
+
     private function removeReferenceSections(string $summary): string
     {
         $summary = preg_replace(
@@ -295,5 +447,14 @@ PANDUAN KETAT KONTEN RANGKUMAN:
         $summary = preg_replace('/\n\s*\*\s*$/u', '', $summary ?? '');
 
         return trim($summary ?? '');
+    }
+
+    private function extractFlashcardJson(string $value): ?string
+    {
+        if (preg_match('/\[\s*\{.*\}\s*\]/s', $value, $matches)) {
+            return $matches[0];
+        }
+
+        return null;
     }
 }

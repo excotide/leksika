@@ -38,6 +38,8 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     Route::post('/documents', [DocumentController::class, 'store']);
 
+    Route::post('/documents/{id}/flashcards', [DocumentController::class, 'generateFlashcards']);
+
     Route::get('/documents/{id}', [DocumentController::class, 'show']);
 
 

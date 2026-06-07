@@ -8,7 +8,12 @@ abstract class SummaryEvent extends Equatable {
 }
 
 class FetchDocumentsRequested extends SummaryEvent {
-  const FetchDocumentsRequested();
+  const FetchDocumentsRequested({this.search});
+
+  final String? search;
+
+  @override
+  List<Object?> get props => [search];
 }
 
 class FetchDocumentDetailRequested extends SummaryEvent {
@@ -35,4 +40,17 @@ class UploadDocumentRequested extends SummaryEvent {
 
   @override
   List<Object?> get props => [filePath, length, makeQuiz, quizCount];
+}
+
+class CreateFlashcardsRequested extends SummaryEvent {
+  const CreateFlashcardsRequested({
+    required this.id,
+    this.quizCount,
+  });
+
+  final int id;
+  final String? quizCount;
+
+  @override
+  List<Object?> get props => [id, quizCount];
 }

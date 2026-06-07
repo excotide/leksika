@@ -1,12 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leksika/core/services/google_auth_service.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_event.dart';
 import 'package:leksika/features/auth/presentation/bloc/auth_state.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,19 +12,10 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  static const String _rememberedEmailKey = 'remembered_login_email';
-
-  bool _isRemember = false;
   bool _obs = true;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _loadRememberedEmail();
-  }
 
   @override
   void dispose() {
@@ -40,36 +28,12 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    unawaited(_saveRememberPreference());
     context.read<AuthBloc>().add(
           LoginRequested(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           ),
         );
-  }
-
-  Future<void> _loadRememberedEmail() async {
-    final prefs = await SharedPreferences.getInstance();
-    final rememberedEmail = prefs.getString(_rememberedEmailKey);
-    if (!mounted || rememberedEmail == null || rememberedEmail.isEmpty) return;
-
-    setState(() {
-      _isRemember = true;
-      _emailController.text = rememberedEmail;
-    });
-  }
-
-  Future<void> _saveRememberPreference() async {
-    final prefs = await SharedPreferences.getInstance();
-    final email = _emailController.text.trim();
-
-    if (_isRemember && email.isNotEmpty) {
-      await prefs.setString(_rememberedEmailKey, email);
-      return;
-    }
-
-    await prefs.remove(_rememberedEmailKey);
   }
 
   Future<void> _googleSignIn() async {
@@ -183,21 +147,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             },
                           ),
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              Row(
-                                children: [
-                                  Checkbox(
-                                    value: _isRemember,
-                                    onChanged: isLoading
-                                        ? null
-                                        : (v) => setState(() => _isRemember = v!),
-                                    activeColor: const Color(0xFF006947),
-                                  ),
-                                  const Text('Remember me',
-                                      style: TextStyle(fontSize: 12)),
-                                ],
-                              ),
                               TextButton(
                                 onPressed: isLoading
                                     ? null

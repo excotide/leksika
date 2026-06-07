@@ -2,10 +2,13 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:leksika/core/di/injection_container.dart';
+import 'package:leksika/core/services/in_app_notification_service.dart';
 import 'package:leksika/core/utils/content_sanitizer.dart';
 import 'package:leksika/features/summary/domain/entities/document_entity.dart';
+import 'package:leksika/features/summary/domain/usecases/get_summary_usecase.dart';
 
-class SummaryDetailScreen extends StatelessWidget {
+class SummaryDetailScreen extends StatefulWidget {
   const SummaryDetailScreen({
     super.key,
     required this.title,
@@ -20,7 +23,23 @@ class SummaryDetailScreen extends StatelessWidget {
   final DocumentEntity? document;
 
   @override
+  State<SummaryDetailScreen> createState() => _SummaryDetailScreenState();
+}
+
+class _SummaryDetailScreenState extends State<SummaryDetailScreen> {
+  DocumentEntity? _document;
+  bool _isCreatingFlashcards = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _document = widget.document;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final document = _document;
+
     return Scaffold(
       backgroundColor: const Color(0xFFDFF5EC),
       body: Column(
@@ -33,7 +52,7 @@ class SummaryDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    widget.title,
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -42,18 +61,20 @@ class SummaryDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Dibuat dari $pageCount',
+                    'Dibuat dari ${widget.pageCount}',
                     style: const TextStyle(
                       fontSize: 16,
                       color: Color(0xFF2F6555),
                     ),
                   ),
-                  if (document?.flashcards.isNotEmpty ?? false) ...[
+                  if (document != null) ...[
                     const SizedBox(height: 16),
-                    _buildFlashcardShortcut(context),
+                    document.flashcards.isNotEmpty
+                        ? _buildFlashcardShortcut(context, document)
+                        : _buildCreateFlashcardShortcut(context, document),
                   ],
                   const SizedBox(height: 24),
-                  ...contents.map((data) => _buildContentCard(
+                  ...widget.contents.map((data) => _buildContentCard(
                         data['subTitle'] ?? '',
                         data['body'] ?? '',
                       )),
@@ -66,9 +87,8 @@ class SummaryDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFlashcardShortcut(BuildContext context) {
-    final totalCards = document?.flashcards.length ?? 0;
-
+  Widget _buildFlashcardShortcut(BuildContext context, DocumentEntity document) {
+    final totalCards = document.flashcards.length;
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(18),
@@ -133,6 +153,233 @@ class SummaryDetailScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCreateFlashcardShortcut(
+    BuildContext context,
+    DocumentEntity document,
+  ) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: _isCreatingFlashcards
+            ? null
+            : () => _showFlashcardCountPicker(context, document),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFB7EDD9), width: 1.5),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8FAF2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: _isCreatingFlashcards
+                    ? const Padding(
+                        padding: EdgeInsets.all(10),
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(
+                        Icons.add_card_outlined,
+                        color: Color(0xFF006947),
+                        size: 22,
+                      ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _isCreatingFlashcards
+                          ? 'Membuat Flashcard...'
+                          : 'Buat Flashcard',
+                      style: const TextStyle(
+                        color: Color(0xFF00362A),
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Pilih jumlah soal sebelum membuat kartu',
+                      style: TextStyle(
+                        color: Color(0xFF2F6555),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Color(0xFF006947),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showFlashcardCountPicker(
+    BuildContext context,
+    DocumentEntity document,
+  ) async {
+    final selectedQuizCount = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        const options = ['5 Soal', '10 Soal', '15 Soal'];
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDDEDE8),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'Jumlah Flashcard',
+                  style: TextStyle(
+                    color: Color(0xFF00362A),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Pilih berapa soal yang ingin dibuat dari rangkuman ini.',
+                  style: TextStyle(
+                    color: Color(0xFF2F6555),
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ...options.map(
+                  (option) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Material(
+                      color: const Color(0xFFE8FAF2),
+                      borderRadius: BorderRadius.circular(14),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () => Navigator.pop(context, option),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 14,
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.style_outlined,
+                                color: Color(0xFF006947),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  option,
+                                  style: const TextStyle(
+                                    color: Color(0xFF00362A),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              const Icon(
+                                Icons.chevron_right_rounded,
+                                color: Color(0xFF006947),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted || selectedQuizCount == null) return;
+    await _createFlashcards(context, document, selectedQuizCount);
+  }
+
+  Future<void> _createFlashcards(
+    BuildContext context,
+    DocumentEntity document,
+    String quizCount,
+  ) async {
+    setState(() => _isCreatingFlashcards = true);
+    final result = await sl<CreateFlashcardsUsecase>()(
+      CreateFlashcardsParams(id: document.id, quizCount: quizCount),
+    );
+
+    if (!mounted) return;
+
+    result.fold(
+      (failure) {
+        setState(() => _isCreatingFlashcards = false);
+        InAppNotificationService.show(
+          title: 'Gagal membuat flashcard',
+          body: failure.message,
+          icon: Icons.error_outline_rounded,
+          backgroundColor: const Color(0xFFFF3B30),
+          titleColor: Colors.white,
+          bodyColor: Colors.white,
+          iconBackgroundColor: const Color(0x33FFFFFF),
+          iconColor: Colors.white,
+          closeIconColor: Colors.white,
+          bodyMaxLines: 5,
+          duration: const Duration(seconds: 6),
+        );
+      },
+      (updatedDocument) {
+        setState(() {
+          _document = updatedDocument;
+          _isCreatingFlashcards = false;
+        });
+        InAppNotificationService.show(
+          title: 'Flashcard berhasil dibuat',
+          body: '${updatedDocument.flashcards.length} kartu siap dipelajari.',
+          icon: Icons.check_circle_rounded,
+          onTap: () => Navigator.pushNamed(
+            context,
+            '/isi-flashcard',
+            arguments: updatedDocument,
+          ),
+        );
+      },
     );
   }
 

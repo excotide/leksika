@@ -9,22 +9,27 @@ class SummaryBloc extends Bloc<SummaryEvent, SummaryState> {
     required this.getDocumentsUsecase,
     required this.getDocumentDetailUsecase,
     required this.uploadDocumentUsecase,
+    required this.createFlashcardsUsecase,
   }) : super(const SummaryInitial()) {
     on<FetchDocumentsRequested>(_onFetchDocuments);
     on<FetchDocumentDetailRequested>(_onFetchDocumentDetail);
     on<UploadDocumentRequested>(_onUploadDocument);
+    on<CreateFlashcardsRequested>(_onCreateFlashcards);
   }
 
   final GetDocumentsUsecase getDocumentsUsecase;
   final GetDocumentDetailUsecase getDocumentDetailUsecase;
   final UploadDocumentUsecase uploadDocumentUsecase;
+  final CreateFlashcardsUsecase createFlashcardsUsecase;
 
   Future<void> _onFetchDocuments(
     FetchDocumentsRequested event,
     Emitter<SummaryState> emit,
   ) async {
     emit(const SummaryLoading());
-    final result = await getDocumentsUsecase();
+    final result = await getDocumentsUsecase(
+      GetDocumentsParams(search: event.search),
+    );
     result.fold(
       (failure) => emit(SummaryFailure(_mapFailure(failure))),
       (documents) => emit(SummaryListLoaded(documents)),
@@ -57,6 +62,20 @@ class SummaryBloc extends Bloc<SummaryEvent, SummaryState> {
         makeQuiz: event.makeQuiz,
         quizCount: event.quizCount,
       ),
+    );
+    result.fold(
+      (failure) => emit(SummaryFailure(_mapFailure(failure))),
+      (document) => emit(SummaryDetailLoaded(document)),
+    );
+  }
+
+  Future<void> _onCreateFlashcards(
+    CreateFlashcardsRequested event,
+    Emitter<SummaryState> emit,
+  ) async {
+    emit(const SummaryLoading());
+    final result = await createFlashcardsUsecase(
+      CreateFlashcardsParams(id: event.id, quizCount: event.quizCount),
     );
     result.fold(
       (failure) => emit(SummaryFailure(_mapFailure(failure))),

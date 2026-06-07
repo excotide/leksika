@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leksika/core/di/injection_container.dart';
@@ -18,48 +20,125 @@ class RiwayatScreen extends StatefulWidget {
 }
 
 class RiwayatScreenState extends State<RiwayatScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _fetchDocuments(BuildContext context, {String? search}) {
+    context.read<SummaryBloc>().add(FetchDocumentsRequested(search: search));
+  }
+
+  void _onSearchChanged(BuildContext context, String value) {
+    setState(() {});
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 450), () {
+      final query = value.trim();
+      if (_searchQuery == query) return;
+      setState(() => _searchQuery = query);
+      _fetchDocuments(context, search: query);
+    });
+  }
+
+  void _clearSearch(BuildContext context) {
+    _searchDebounce?.cancel();
+    _searchController.clear();
+    if (_searchQuery.isEmpty) return;
+    setState(() => _searchQuery = '');
+    _fetchDocuments(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => sl<SummaryBloc>()..add(const FetchDocumentsRequested()),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFE8FAF2),
-        floatingActionButton: Transform.translate(
-          offset: const Offset(0, 8),
-          child: FloatingActionButton(
-            onPressed: () => Navigator.pushNamed(context, '/create-rangkuman'),
-            backgroundColor: const Color(0xFF006947),
-            shape: const CircleBorder(),
-            elevation: 4,
-            child: const Icon(Icons.add, color: Colors.white, size: 28),
+      child: Builder(
+        builder: (context) => Scaffold(
+          backgroundColor: const Color(0xFFE8FAF2),
+          resizeToAvoidBottomInset: false,
+          floatingActionButton: Transform.translate(
+            offset: const Offset(0, 8),
+            child: FloatingActionButton(
+              onPressed: () => Navigator.pushNamed(context, '/create-rangkuman'),
+              backgroundColor: const Color(0xFF006947),
+              shape: const CircleBorder(),
+              elevation: 4,
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
+            ),
           ),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        bottomNavigationBar: const BottomNavbar(activeIndex: 1),
-        body: Column(
-          children: [
-            _buildHeader(context),
-            Expanded(
-              child: RefreshIndicator(
-                color: const Color(0xFF006947),
-                onRefresh: () async {
-                  context.read<SummaryBloc>().add(const FetchDocumentsRequested());
-                },
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics(),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Column(
-                    children: [
-                      _buildHistorySection(),
-                      const SizedBox(height: 100),
-                    ],
+          floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+          bottomNavigationBar: const BottomNavbar(activeIndex: 1),
+          body: Column(
+            children: [
+              _buildHeader(context),
+              Expanded(
+                child: RefreshIndicator(
+                  color: const Color(0xFF006947),
+                  onRefresh: () async {
+                    _fetchDocuments(context, search: _searchQuery);
+                  },
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Column(
+                      children: [
+                        _buildSearchField(context),
+                        const SizedBox(height: 8),
+                        _buildHistorySection(),
+                        const SizedBox(height: 100),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchField(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (value) => _onSearchChanged(context, value),
+        textInputAction: TextInputAction.search,
+        onSubmitted: (value) {
+          _searchDebounce?.cancel();
+          final query = value.trim();
+          setState(() => _searchQuery = query);
+          _fetchDocuments(context, search: query);
+        },
+        decoration: InputDecoration(
+          hintText: 'Cari riwayat rangkuman',
+          prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF006947)),
+          suffixIcon: _searchController.text.isEmpty
+              ? null
+              : IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  color: const Color(0xFF2F6555),
+                  onPressed: () => _clearSearch(context),
+                ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
         ),
       ),
     );
@@ -80,22 +159,31 @@ class RiwayatScreenState extends State<RiwayatScreen> {
             padding: const EdgeInsets.all(20),
             child: ErrorView(
               message: state.message,
-              onRetry: () => context.read<SummaryBloc>().add(const FetchDocumentsRequested()),
+              onRetry: () => _fetchDocuments(context, search: _searchQuery),
             ),
           );
         }
 
         if (state is SummaryListLoaded) {
           if (state.documents.isEmpty) {
+            final isSearching = _searchQuery.isNotEmpty;
             return Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 50),
                 child: Column(
                   children: [
-                    Icon(Icons.history_edu_rounded, size: 64, color: Colors.grey[400]),
+                    Icon(
+                      isSearching
+                          ? Icons.search_off_rounded
+                          : Icons.history_edu_rounded,
+                      size: 64,
+                      color: Colors.grey[400],
+                    ),
                     const SizedBox(height: 16),
                     Text(
-                      'Belum ada riwayat rangkuman.',
+                      isSearching
+                          ? 'Riwayat tidak ditemukan.'
+                          : 'Belum ada riwayat rangkuman.',
                       style: TextStyle(color: Colors.grey[600], fontSize: 16),
                     ),
                   ],
@@ -185,6 +273,7 @@ class RiwayatScreenState extends State<RiwayatScreen> {
 
     return GestureDetector(
       onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus();
         Navigator.pushNamed(
           context,
           '/detail',

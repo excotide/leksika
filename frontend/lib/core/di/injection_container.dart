@@ -128,11 +128,15 @@ Future<void> init() async {
     ..registerLazySingleton<UploadDocumentUsecase>(
       () => UploadDocumentUsecase(sl<SummaryRepository>()),
     )
+    ..registerLazySingleton<CreateFlashcardsUsecase>(
+      () => CreateFlashcardsUsecase(sl<SummaryRepository>()),
+    )
     ..registerFactory<SummaryBloc>(
       () => SummaryBloc(
         getDocumentsUsecase: sl<GetDocumentsUsecase>(),
         getDocumentDetailUsecase: sl<GetDocumentDetailUsecase>(),
         uploadDocumentUsecase: sl<UploadDocumentUsecase>(),
+        createFlashcardsUsecase: sl<CreateFlashcardsUsecase>(),
       ),
     )
     ..registerLazySingleton<NotificationRemoteDataSource>(

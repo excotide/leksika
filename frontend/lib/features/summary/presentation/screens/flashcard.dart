@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:leksika/core/di/injection_container.dart';
@@ -28,29 +30,133 @@ class FlashcardItem {
   });
 }
 
-class FlashcardPage extends StatelessWidget {
+class FlashcardPage extends StatefulWidget {
   const FlashcardPage({super.key});
 
+  @override
+  State<FlashcardPage> createState() => _FlashcardPageState();
+}
+
+class _FlashcardPageState extends State<FlashcardPage> {
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _fetchDocuments(BuildContext context, {String? search}) {
+    context.read<SummaryBloc>().add(FetchDocumentsRequested(search: search));
+  }
+
+  void _onSearchChanged(BuildContext context, String value) {
+    setState(() {});
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 450), () {
+      final query = value.trim();
+      if (_searchQuery == query) return;
+      setState(() => _searchQuery = query);
+      _fetchDocuments(context, search: query);
+    });
+  }
+
+  void _clearSearch(BuildContext context) {
+    _searchDebounce?.cancel();
+    _searchController.clear();
+    if (_searchQuery.isEmpty) {
+      setState(() {});
+      return;
+    }
+    setState(() => _searchQuery = '');
+    _fetchDocuments(context);
+  }
+
   List<FlashcardItem> _itemsFromDocuments(List<DocumentEntity> documents) {
-    return documents
+    final items = documents
         .where((document) => document.flashcards.isNotEmpty)
         .map(
           (document) => FlashcardItem(
             document: document,
             fileName: document.title,
             cardCount: document.flashcards.length,
-            createdAt: document.createdAt,
+            createdAt: _latestFlashcardCreatedAt(document) ?? document.createdAt,
           ),
         )
         .toList();
+
+    items.sort((a, b) {
+      final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return bDate.compareTo(aDate);
+    });
+
+    return items;
+  }
+
+  DateTime? _latestFlashcardCreatedAt(DocumentEntity document) {
+    DateTime? latest;
+
+    for (final flashcard in document.flashcards) {
+      final createdAt = flashcard.createdAt;
+      if (createdAt == null) continue;
+      if (latest == null || createdAt.isAfter(latest)) {
+        latest = createdAt;
+      }
+    }
+
+    return latest;
+  }
+
+  Widget _buildSearchField(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (value) => _onSearchChanged(context, value),
+        textInputAction: TextInputAction.search,
+        onSubmitted: (value) {
+          _searchDebounce?.cancel();
+          final query = value.trim();
+          setState(() => _searchQuery = query);
+          _fetchDocuments(context, search: query);
+        },
+        decoration: InputDecoration(
+          hintText: 'Cari flashcard',
+          prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF006947)),
+          suffixIcon: _searchController.text.isEmpty
+              ? null
+              : IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  color: const Color(0xFF2F6555),
+                  onPressed: () => _clearSearch(context),
+                ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => sl<SummaryBloc>()..add(const FetchDocumentsRequested()),
-      child: Scaffold(
+      child: Builder(
+        builder: (context) => Scaffold(
       backgroundColor: const Color(0xFFE8F5EE),
+      resizeToAvoidBottomInset: false,
 
       // ── AppBar melengkung ke bawah ──────────────────────────
       // Pakai PreferredSize + Container dengan borderRadius bottomLeft/Right
@@ -133,61 +239,77 @@ class FlashcardPage extends StatelessWidget {
       ),
 
       // ── Body ──────────────────────────────────────────────────
-      body: BlocBuilder<SummaryBloc, SummaryState>(
-        builder: (context, state) {
-          if (state is SummaryLoading) {
-            return const Center(
-              child: LoadingWidget(message: 'Memuat flashcard...'),
-            );
-          }
+      body: Column(
+        children: [
+          const SizedBox(height: 20),
+          _buildSearchField(context),
+          Expanded(
+            child: BlocBuilder<SummaryBloc, SummaryState>(
+              builder: (context, state) {
+                if (state is SummaryLoading) {
+                  return const Center(
+                    child: LoadingWidget(message: 'Memuat flashcard...'),
+                  );
+                }
 
-          if (state is SummaryFailure) {
-            return _FlashcardMessage(
-              icon: Icons.error_outline,
-              title: 'Gagal memuat flashcard',
-              body: state.message,
-            );
-          }
+                if (state is SummaryFailure) {
+                  return _FlashcardMessage(
+                    icon: Icons.error_outline,
+                    title: 'Gagal memuat flashcard',
+                    body: state.message,
+                  );
+                }
 
-          final documents = state is SummaryListLoaded
-              ? state.documents
-              : <DocumentEntity>[];
-          final items = _itemsFromDocuments(documents);
+                final documents = state is SummaryListLoaded
+                    ? state.documents
+                    : <DocumentEntity>[];
+                final items = _itemsFromDocuments(documents);
+                final isSearching = _searchQuery.isNotEmpty;
 
-          if (items.isEmpty) {
-            return const _FlashcardMessage(
-              icon: Icons.style_outlined,
-              title: 'Belum ada flashcard',
-              body: 'Buat rangkuman dengan opsi flashcard untuk mulai belajar.',
-            );
-          }
+                if (items.isEmpty) {
+                  return _FlashcardMessage(
+                    icon: isSearching
+                        ? Icons.search_off_rounded
+                        : Icons.style_outlined,
+                    title: isSearching
+                        ? 'Flashcard tidak ditemukan'
+                        : 'Belum ada flashcard',
+                    body: isSearching
+                        ? 'Coba gunakan kata kunci lain.'
+                        : 'Buat rangkuman dengan opsi flashcard untuk mulai belajar.',
+                  );
+                }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.only(
-              top: 24,
-              left: 16,
-              right: 16,
-              bottom: 32,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Subjudul section
-                const _SectionHeader(),
-
-                const SizedBox(height: 20),
-
-                // List kartu flashcard
-                ...items.map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: _FlashcardCard(item: item),
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.only(
+                    top: 16,
+                    left: 16,
+                    right: 16,
+                    bottom: 32,
                   ),
-                ),
-              ],
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Subjudul section
+                      const _SectionHeader(),
+
+                      const SizedBox(height: 20),
+
+                      // List kartu flashcard
+                      ...items.map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _FlashcardCard(item: item),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
+        ),
         ),
       ),
     );
@@ -249,11 +371,14 @@ class _FlashcardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    void navigate() => Navigator.pushNamed(
-          context,
-          '/isi-flashcard',
-          arguments: item.document,
-        );
+    void navigate() {
+      FocusManager.instance.primaryFocus?.unfocus();
+      Navigator.pushNamed(
+        context,
+        '/isi-flashcard',
+        arguments: item.document,
+      );
+    }
 
     return Container(
       decoration: BoxDecoration(

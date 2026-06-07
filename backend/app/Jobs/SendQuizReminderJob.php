@@ -33,8 +33,8 @@ class SendQuizReminderJob implements ShouldQueue
         $user = User::find($this->userId);
         
         $document = Document::where('user_id', $this->userId)
+            ->where('id', $this->documentId)
             ->whereHas('flashcards')
-            ->latest()
             ->first();
 
         if (!$user || !$document) {

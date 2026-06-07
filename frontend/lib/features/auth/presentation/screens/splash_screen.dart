@@ -28,7 +28,8 @@ class _SplashScreenState extends State<SplashScreen> {
         if (!mounted) return;
         final hasSeenOnboarding =
             prefs.getBool(OnboardingScreen.seenKey) ?? false;
-        final authState = context.read<AuthBloc>().state;
+        final authState = await _resolveAuthState();
+        if (!mounted) return;
         Navigator.pushReplacementNamed(
           context,
           authState is Authenticated
@@ -39,6 +40,22 @@ class _SplashScreenState extends State<SplashScreen> {
         );
       });
     });
+  }
+
+  Future<AuthState> _resolveAuthState() async {
+    final bloc = context.read<AuthBloc>();
+    final currentState = bloc.state;
+
+    if (currentState is! AuthInitial && currentState is! AuthLoading) {
+      return currentState;
+    }
+
+    return bloc.stream
+        .firstWhere((state) => state is! AuthInitial && state is! AuthLoading)
+        .timeout(
+          const Duration(seconds: 3),
+          onTimeout: () => bloc.state,
+        );
   }
 
   @override
