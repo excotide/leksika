@@ -69,11 +69,18 @@ class _EditProfileViewState extends State<_EditProfileView> {
   Future<void> _pickImage() async {
     try {
       final result = await FilePicker.pickFiles(type: FileType.image);
-      final path = result?.files.single.path;
-      if (path != null && mounted) {
-        // Hanya simpan path untuk preview — upload dilakukan saat Save ditekan
-        setState(() => _pickedImagePath = path);
+      final picked = result?.files.single;
+      if (picked == null || !mounted) return;
+
+      final sizeBytes = picked.size;
+      if (sizeBytes > 5 * 1024 * 1024) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Foto terlalu besar. Maksimal 5 MB.')),
+        );
+        return;
       }
+
+      setState(() => _pickedImagePath = picked.path);
     } catch (e) {
       debugPrint('Error picking image: $e');
     }

@@ -100,9 +100,12 @@ class DocumentController extends Controller
             }
 
             $document->update([
-                'extracted_text' => $cleanText, 
+                'extracted_text' => $cleanText,
                 'extraction_engine' => (string) config('document_extraction.engine', 'php'),
+                'file_path' => null,
             ]);
+
+            Storage::delete($path);
 
             $lengthParam = $request->input('length', 'Sedang');
             $wantsQuiz = filter_var($request->input('make_quiz'), FILTER_VALIDATE_BOOLEAN);

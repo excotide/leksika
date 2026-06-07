@@ -1,0 +1,13 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:80"
+    env_file:
+      - .env
+    volumes:
+      - ./storage/app/public:/var/www/storage/app/public
+      - ./storage/logs:/var/www/storage/logs
+    restart: unless-stopped
